@@ -7,7 +7,7 @@ author:
   - Jessica Lambert 
 date: "July 26, 2024" 
 toc: true
-format: 
+format:  
   html:
     theme: cosmo
     html-math-method: katex
