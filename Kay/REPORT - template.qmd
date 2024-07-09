@@ -4,7 +4,7 @@ author:
   - Brooke Benton
   - Rohan Devraj
   - Jade Kay
-  - Jessica Lambert
+  - Jessica Lambert 
 date: "July 26, 2024"
 toc: true
 format:
