@@ -2,7 +2,7 @@
 title: "Juvenile Healthcare Outcomes Impacted by Adult Health-Related Practices "
 author:
   - Brooke Benton
-  - Rohan Devraj
+  - Rohan Devraj  
   - Jade Kay
   - Jessica Lambert 
 date: "July 26, 2024"
