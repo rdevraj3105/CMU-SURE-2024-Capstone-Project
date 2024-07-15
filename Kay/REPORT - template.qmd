@@ -1,5 +1,5 @@
 ---
-title: "Juvenile Healthcare Outcomes Impacted by Adult Health-Related Practices "
+title: "Impact of Adult Health-Related Practices on Juvenile Health Outcomes"
 author:
   - Brooke Benton
   - Rohan Devraj  
@@ -25,18 +25,160 @@ editor:
 
 ## Introduction
 
-Describe the problem and why it is important.
+The health behaviors of adults in a community can have a profound impact on their children’s health outcomes. Juvenile quality and length of life can be impacted by the behaviors of the adults around them, such as smoking, drinking, poor diet, and physical inactivity. More insight into the relationship between these variables can be used to identify intergenerational health impacts to provide early intervention and prevention of juvenile outcomes, as well as inform new policy and education. In this report, we analyze the impact of a variety of adult health behaviors on child mortality rate and low birthweight on a county level.
+
+We decided to use low birthweight as a measure of juvenile outcomes due to the risk of future health complications and death. According to the original data source, “infants born with low birthweight have approximately 20 times greater chance of dying than those with normal birth weight” (County Health Rankings 2024). Moreover, infants who survive low birthweight at birth “may face adverse health outcomes such as decreased growth, lower IQ, impaired language development, and chronic conditions (e.g., obesity, diabetes, cardiovascular disease) during adulthood” (County Health Rankings 2024). We also chose to use the child mortality rate variable as a juvenile outcome- while childhood mortality is somewhat rare, mortality rates illustrate the most severe consequence of negative health behaviors and can point to the most significant behaviors that need to be addressed. 
+
 
 ## Data
 
-Describe the data you’re using in detail, where you accessed it, along with relevant exploratory data analysis (EDA).
-You should also include descriptions of any major data pre-processing/cleaning steps.
+The data utilized is from the County Health Rankings & Roadmaps sourced by the Population Health Institute at the University of Washington. This dataset includes health and socioeconomic data at county level across the United States from 2024. Our key juvenile health outcomes, child mortality rate and low birthweight, are measured as number of deaths among residents under age 20 per 100,000 population and percentage of live births less than 2,500 grams, respectively. For this report we focused primarily on the following adult health behaviors and environments. 
 
-## Methods
+- Insufficient sleep: percentage of adults who report fewer than 7 hours of sleep on average
+- Excessive drinking: percentage of adults reporting binge or heavy drinking
+- Adult smoking: percentage of adults who are current smokers
+- Food Insecurity: percentage of adults who lack adequate access to food
+- Uninsured: percentage of adult population under age 65 without health insurance
+- Sexually Transmitted Infections: number of newly diagnosed chlamydia cases per 100,000 population
+- Physical Inactivity: percentage of adults reporting no leisure-time physical activity 
+- Adult Obesity: percentage of the adult population that reports a body mass index greater than or equal to 30 kg/m2
 
-Describe the modeling techniques you chose, their assumptions, justifications for why they are appropriate for the problem, and your plan for comparison/evaluation approaches.
 
-## Results
+## Exploratory Data Analysis & Cleaning
+
+We performed some initial pre-processing and cleaning of the dataset before investigating the variables. The following scatterplots demonstrate the child mortality rate relationship between adult obesity, adult smoking, and excessive drinking. Excessive drinking seems to contribute to the least amount of child mortality. However, adult smoking and adult obesity are able to show an increase in percentage as it relates to an increase in child mortality. From this we can predict that adult obesity and adult smoking has the highest correlation towards child mortality. Moreover, adult smoking and child mortality have the highest correlation coefficient which is 0.58.
+
+```{r}
+#Child Mortality scatterplots
+library(ggplot2)
+library(tidyverse)
+library(janitor)
+
+Data<- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv")
+library(scales)
+library(cowplot)
+library(patchwork)
+
+na.omit(Data)
+Updated_Data <- Data |> 
+  clean_names() |> 
+  slice(-1) |> 
+  mutate(adult_smoking_raw_value=as.numeric(adult_smoking_raw_value),
+         child_mortality_raw_value= as.numeric(child_mortality_raw_value), infant_mortality_raw_value= as.numeric(infant_mortality_raw_value)) |> 
+  filter(!is.na(adult_smoking_raw_value), !is.na(child_mortality_raw_value)) |> 
+  filter(county_clustered_yes_1_no_0 %in% c(0,1))
+
+Updated_Data2 <- Updated_Data|> 
+  clean_names() |> 
+  slice(-1) |> 
+  mutate(adult_obesity_raw_value=as.numeric(adult_obesity_raw_value),
+         child_mortality_raw_value= as.numeric(child_mortality_raw_value)) |> 
+  filter(!is.na(adult_obesity_raw_value), !is.na(child_mortality_raw_value))
+
+Updated_Data3 <- Updated_Data2 |> 
+  clean_names() |> 
+  slice(-1) |> 
+  mutate(excessive_drinking_raw_value=as.numeric(excessive_drinking_raw_value),
+         child_mortality_raw_value= as.numeric(child_mortality_raw_value)) |> 
+  filter(!is.na(excessive_drinking_raw_value), !is.na(child_mortality_raw_value))
+
+obesity<- Updated_Data3 |> 
+  ggplot(aes(x= adult_obesity_raw_value, y= child_mortality_raw_value))+
+  geom_point(color="brown", alpha=.5)+
+  geom_smooth(method= lm, color="black")+
+  scale_x_continuous(labels=percent_format())+
+  scale_y_continuous()+
+  labs(x= "Adult Obesity", y= "Child Mortaility", title= "Adult Obesity")+
+  theme(text= element_text(family="Helvetica", size=15, face="bold", color="#2A475E"),
+        plot.title = element_text(
+          family= "Helvetica",
+          size=17, 
+          face= "bold", 
+          color= "#2A475E", 
+          hjust=.5
+        ))+
+  theme(
+    axis.ticks= element_blank(), 
+    axis.line= element_line(colour="grey50"), 
+    panel.grid= element_line(color="#B4AEA9"),
+    panel.grid.minor = element_blank(), 
+    panel.grid.major.x = element_blank(), 
+    panel.grid.major.y = element_blank(), 
+    panel.background = element_rect(fill="#FBF9F4", color= "#FBF9F4"), 
+    plot.background = element_rect(fill="#FBF9F4", color= "#FBF9F4")
+ )
+
+smoking<- Updated_Data3 |> 
+  ggplot(aes(x= adult_smoking_raw_value, y= child_mortality_raw_value))+
+  geom_point(color="brown", alpha=.5)+
+  geom_smooth(method= lm, color="black")+
+  scale_x_continuous(labels=percent_format())+
+  scale_y_continuous()+
+  labs(x= "Adult Smoking", y= "Child Mortaility",  title= "Adult Smoking")+
+  theme(text= element_text(family="Helvetica", size=15, face="bold", color="#2A475E"),
+        plot.title = element_text(
+          family= "Helvetica",
+          size=17, 
+          face= "bold", 
+          color= "#2A475E", 
+          hjust=.5
+        ))+
+  theme(
+    axis.ticks= element_blank(), 
+    axis.line= element_line(colour="grey50"), 
+    panel.grid= element_line(color="#B4AEA9"),
+    panel.grid.minor = element_blank(), 
+    panel.grid.major.x = element_blank(), 
+    panel.grid.major.y = element_blank(), 
+    panel.background = element_rect(fill="#FBF9F4", color= "#FBF9F4"), 
+    plot.background = element_rect(fill="#FBF9F4", color= "#FBF9F4")
+  )
+
+drinking<- Updated_Data3 |> 
+  ggplot(aes(x= excessive_drinking_raw_value, y= child_mortality_raw_value))+
+  geom_point(color="brown", alpha=.5)+
+  geom_smooth(method= lm, color="black")+
+  scale_x_continuous(labels=percent_format())+
+  scale_y_continuous()+
+  labs(x= "Excessive Drinking", y= "Child Mortaility",  title= "Excessive Drinking")+
+  theme(text= element_text(family="Helvetica", size=15, face="bold", color="#2A475E"),
+        plot.title = element_text(
+          family= "Helvetica",
+          size=17, 
+          face= "bold", 
+          color= "#2A475E", 
+          hjust=.5
+        ))+
+  theme(
+    axis.ticks= element_blank(), 
+    axis.line= element_line(colour="grey50"), 
+    panel.grid= element_line(color="#B4AEA9"),
+    panel.grid.minor = element_blank(), 
+    panel.grid.major.x = element_blank(), 
+    panel.grid.major.y = element_blank(), 
+    panel.background = element_rect(fill="#FBF9F4", color= "#FBF9F4"), 
+    plot.background = element_rect(fill="#FBF9F4", color= "#FBF9F4")
+  )
+
+plot_grid(drinking+smoking+obesity)
+```
+
+The following scatterplots are a glimpse at the relationship between low birthweight and some adult health behaviors: adult smoking, insufficient sleep, adult obesity, and physical inactivity. All four scatterplots demonstrate a strong positive correlation. Of the scatterplots shown, insufficient sleep has the strongest relationship with low birthweight.   
+
+
+```{r}
+#insert Rohan's scatterplot code here
+```
+
+
+The below graph illustrates the percentage of low birthweight births by state, and is colored by the percentage of the county population reporting insufficient sleep. The red points represent counties with over 75% of the population reporting insufficient sleep. Generally, counties that have a higher percentage of low birthweight births also have a higher percentage of insufficient sleep across the population. The red points are primarily to the right side of the graph, indicating an association between low birthweight and insufficient sleep. 
+
+```{r}
+#insert Rohans lollipop graph
+```
+
+
+## Methods and Results
 
 Describe your results.
 This can include tables and plots showing your results, as well as text describing how your models worked and the appropriate interpretations of the relevant output.
@@ -44,11 +186,22 @@ This can include tables and plots showing your results, as well as text describi
 
 ## Discussion
 
-Give your conclusions and summarize what you have learned with regards to your question of interest.
-Are there any limitations with the approaches you used?
-What do you think are the next steps to follow-up your project?
+In this report, we examined a multitude of adult health behaviors and their relationship to child mortality and low birthweight.
 
-## Appendix: A quick tutorial
+**Limitations** 
+The dataset only included three variables specific to juvenile health, two of which we chose to focus on. Child mortality rate is a relatively rare event and will experience small changes, especially in small communities, which may be hard to detect. Counties with smaller populations may also experience a lot of relative change in mortality rates from year to year, often due to normal variation rather than the true underlying risk for child mortality. The dataset consisted of county level population data, rather than data on parent-to-child relationships. This limited the conclusions we could make from trends in the data. 
+
+**Future Work**
+Our work focuses on predicting juvenile health outcomes from adult health behaviors in the population. For future analysis of this topic, better results can persist if data can be found specifically on parent health behaviors and child outcomes. Also, looking at data by state can best help infer which areas need more focus. Furthermore, investigation should be done into why excessive drinking and child mortality have a strong negative correlation. This is an important area to focus on being that this emphasizes some of the limitations within the project. For example, factors such as gender may be influencing the results. 
+
+Based on our research for future studies, using demographic, income, and gender can all be contributing variables as it pertains to the outcome of low birthweight and child mortality. Having variables categorized by age can contribute to a bigger significance towards variables used. Age can give a further look into which age group has the highest correlation towards the variables used. 
+
+## Appendix
+
+
+
+
+
 
 **(Feel free to remove this section when you submit)**
 
