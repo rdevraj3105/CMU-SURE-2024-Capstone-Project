@@ -1,6 +1,7 @@
 library(tidyverse)
 read_csv("Devraj/analytic_data2024.csv")
 
+library(ggpubr)
 library(janitor)
 library(tidyverse)
 library(scales)
@@ -52,6 +53,7 @@ birthweight_plot <- function(var_name, var_label){
     geom_point(alpha =0.4, color = "brown")+
    #geom_point(size = 3, alpha = 0.3, color = "brown") + 
     geom_smooth(method = lm, color = "#2a475e") +
+    stat_cor(method="pearson")+
     #geom_density2d() +
     #coord_fixed() +
     #theme(legend.position = "bottom")+
@@ -99,8 +101,11 @@ food_plot = birthweight_plot(food_insecurity_raw_value, "Food insecurity")
 sti_plot = birthweight_plot(sexually_transmitted_infections_raw_value, "Sexually Transmitted Infections")
 uninsured_plot = birthweight_plot(uninsured_raw_value, "Uninsured Adults")
 
+healthdata_subset |> 
+  cor()
 
-plot_grid(smoke_plot, sleep_plot, obesity_plot, inactivity_plot)
+
+plot_grid(sleep_plot, smoke_plot)
 
 library(cowplot)
 
@@ -163,122 +168,13 @@ obesity <- healthdata_subset |>
 
 
 
-# Lasso Regression --------------------------------------------------------
-
-#Predicting low birthweight
-
-library(glmnet)
-
-model_predictors <- healthdata_subset |>
- select(adult_smoking_raw_value, adult_obesity_raw_value, food_insecurity_raw_value, 
-        excessive_drinking_raw_value, physical_inactivity_raw_value, insufficient_sleep_raw_value, 
-  sexually_transmitted_infections_raw_value, uninsured_raw_value) |> 
-  as.matrix()
-
-model_response_birthweight <- healthdata_subset |> 
-  pull(low_birthweight_raw_value)
-
-birthweight_lm <- lm(low_birthweight_raw_value ~ adult_smoking_raw_value + adult_obesity_raw_value + 
-                      food_insecurity_raw_value + excessive_drinking_raw_value + physical_inactivity_raw_value +
-                      insufficient_sleep_raw_value + sexually_transmitted_infections_raw_value + 
-                      uninsured_raw_value, data = healthdata_subset)
-
-summary(birthweight_lm)
-
-library(broom)
-birthweight_lm |> 
-  tidy() |> 
-  mutate(term = fct_reorder(term, estimate)) |> 
-  ggplot(aes(x = estimate, y = term, fill = estimate > 0)) +
-  geom_col(color = "white", show.legend = FALSE) +
-  scale_fill_manual(values = c("darkred", "darkblue"))
-
-
-#summary(birthweight_lm)
-
-#birthweight_ridge <- glmnet(model_predictors, model_response_birthweight, alpha = 0)
-
-#plot(birthweight_ridge, xvar = "lambda")
-
-
-new_labels <- c("Adult Smoking" = adult_smoking_raw_value, "Adult Obesity" = adult_obesity_raw_value, 
-                "Food Insecurity" = food_insecurity_raw_value, "Excessive Drinking" = excessive_drinking_raw_value,
-                "Physical Inactivity" = physical_inactivity_raw_value, "Insufficient Sleep" = insufficient_sleep_raw_value, 
-                "STIs" = sexually_transmitted_infections_raw_value, "Uninsured" = uninsured_raw_value) 
-
-birthweight_lasso_cv <- cv.glmnet(model_predictors, model_response_birthweight, alpha = 1)
-
-
-tidy_lasso_coef <- tidy(birthweight_lasso_cv$glmnet.fit)
-
-tidy_lasso_coef |> 
-  mutate(term = str_remove(term, "_raw_value")) |> 
-  mutate(term = str_replace_all(term, "_", " ")) |> 
-  mutate(term = str_to_sentence(term)) |> 
-  ggplot(aes(x = lambda, y = estimate, group = term, color = term)) +
-  scale_x_log10() +
-  geom_line(alpha = 1, size =1) +
-  geom_vline(xintercept = birthweight_lasso_cv$lambda.min) +
-  geom_vline(xintercept = birthweight_lasso_cv$lambda.1se, linetype = "dashed", color = "black", size =0.5)
-
-tidy_lasso_cv <- tidy(birthweight_lasso_cv)
-
-tidy_lasso_cv |>
-  ggplot(aes(x = lambda, y = nzero)) +
-  geom_line() +
-  geom_vline(xintercept = birthweight_lasso_cv$lambda.min) +
-  geom_vline(xintercept = birthweight_lasso_cv$lambda.1se, linetype = "dashed", color = "red") +
-  scale_x_log10()
-
-lasso_final <- glmnet(model_predictors, model_response_birthweight, alpha = 1,lambda = birthweight_lasso_cv$lambda.1se)
-
-
-library(vip)
 
 
 
-lasso_final |> 
-  vi() |> 
-  mutate(Variable = str_remove(Variable, "_raw_value")) |> 
-  mutate(Variable = str_replace_all(Variable, "_", " ")) |> 
-  mutate(Variable = str_to_sentence(Variable)) |> 
-  mutate(Variable = fct_reorder(Variable, Importance)) |> 
-  ggplot(aes(x = Importance, y = Variable, fill = Importance)) +
-  geom_col(color = "white", show.legend = FALSE) +
-  #scale_fill_manual(values = c("darkred", "darkblue")) +
-  scale_fill_gradient(low = "darkgrey", high = "brown")+
-  labs(x = "Estimate", y = NULL)+
-  theme(text = element_text(family = "Helvetica", size = 8, face = "bold", color = "#2a475e"),
-        plot.title = element_text(
-          family = "Helvetica", 
-          size = 10,
-          face = "bold",
-          color = "#2a475e",
-          hjust = 0.5
-        ),
-        axis.text.y=element_text(color = "#2a475e"))+
-  theme(
-    axis.ticks = element_blank(),
-    axis.line = element_line(colour = "grey50"),
-    panel.grid = element_line(color = "#b4aea9"),
-    #panel.grid.minor = element_blank(),
-    #panel.grid.major.x = element_blank(),
-    #panel.grid.major.y = element_blank(),
-    panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
-    plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
-    text = element_text(family = "Helvetica", size = 18, 
-                        face = "bold", color = "#2a475e"),
-    plot.title = element_text(
-      family = "Helvetica", 
-      size = 20,
-      face = "bold",
-      color = "#2a475e",
-      hjust = 0.5))
 
-#explain how the lambda was picked
-#Lambda was picked with cross validation
-#lambda min λ is the minimum mean cross-validated error
-#largest value of lambda such that error is within 1 standard error of the cross-validated errors for lambda.min.
+
+
+
 
 
 
@@ -364,8 +260,7 @@ mortality_gam_mult |>
 
 
 
-
-
+# Lollipop plot -----------------------------------------------------------
 
 
 healthdata_subset <- healthdata_subset |> 
@@ -384,15 +279,15 @@ View(healthdata_subset)
 
 #Sleep
 healthdata_subset |> 
-  mutate(state_abbreviation=factor(state_abbreviation), 
-         state_abbreviation = fct_reorder(state_abbreviation, low_birthweight_raw_value)) |> 
+ #mutate(state_abbreviation=factor(state_abbreviation), 
+        # state_abbreviation = fct_reorder(state_abbreviation, low_birthweight_raw_value)) |> 
   ggplot(aes(group=state_abbreviation)) +
   geom_segment(aes(x=state_abbreviation, xend=state_abbreviation, y=0, yend=low_birthweight_raw_value)) +
   geom_point(aes(x=state_abbreviation,y=low_birthweight_raw_value, fill = binary_sleep),size=3, 
-             alpha=0.65, shape=21)+
+             alpha=0.8, shape=21)+
   #scale_y_continuous(breaks=seq(0,600,50))+
   scale_y_continuous(labels=percent_format())+
-  coord_flip()+
+  coord_polar()+
   theme(
     panel.grid.major = element_blank(),
     panel.border = element_blank(),
@@ -450,4 +345,24 @@ healthdata_subset |>
     y = "Low Birthweight",
     fill = "Excessive drinking in \u{2265} 75% of county population ",
   )
+
+mean(healthdata_subset$child_mortality_raw_value)
+
+
+library(GGally)
+library(ggcorrplot)
+healthdata_subset |> 
+  select(low_birthweight_raw_value, insufficient_sleep_raw_value, excessive_drinking_raw_value,adult_smoking_raw_value, adult_obesity_raw_value,
+            food_insecurity_raw_value, physical_inactivity_raw_value, sexually_transmitted_infections_raw_value, 
+            uninsured_raw_value) |> 
+  cor() |> 
+  ggpairs()
+
+
+
+
+
+
+
+
 
