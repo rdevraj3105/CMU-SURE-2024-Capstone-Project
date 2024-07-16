@@ -162,90 +162,6 @@ lasso_final |>
 #largest value of lambda such that error is within 1 standard error of the cross-validated errors for lambda.min.
 
 
-
-
-
-
-
-
-
-
-
-
-# Linear Regression -------------------------------------------------------
-birthweight_lm <- lm(low_birthweight_raw_value ~ adult_smoking_raw_value + adult_obesity_raw_value + 
-                       food_insecurity_raw_value + excessive_drinking_raw_value + physical_inactivity_raw_value +
-                       insufficient_sleep_raw_value + sexually_transmitted_infections_raw_value + 
-                       uninsured_raw_value, data = healthdata_subset)
-summary(birthweight_lm)
-tidy(birthweight_lm)
-
-head(birthweight_lm$fitted.values)
-
-#Linear Model
-healthdata_subset |> 
-  mutate(pred_vals = predict(birthweight_lm)) |> 
-  ggplot(aes(x = pred_vals, y = low_birthweight_raw_value))+
-  geom_point(alpha = 0.5, size =3)+
-  geom_abline(slope = 1, intercept = 0, 
-              linetype = "dashed",
-              color = "red",
-              linewidth = 2)
-
-
-#Residuals
-birthweight_lm |>
-  ggplot(aes(x = .fitted, y = .resid)) + 
-  geom_point(alpha = 0.5, size = 3) +
-  geom_hline(yintercept = 0, linetype = "dashed", 
-             color = "red", linewidth = 2) +
-  geom_smooth(se = FALSE)
-
-
-#Regression coefficients
-birthweight_lm |> 
-  tidy(conf.int = TRUE) |> 
-  mutate(term = str_remove(term, "_raw_value")) |> 
-  mutate(term = str_replace_all(term, "_", " ")) |> 
-  mutate(term = str_to_sentence(term)) |> 
-  mutate(term = fct_reorder(term, estimate)) |> 
-  ggplot(aes(x = estimate, y = term,  
-             fill = estimate > 0)) +
-  geom_col(color = "white", show.legend = FALSE) +
-  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0.2) +
-  scale_fill_manual(values = c("darkred", "darkblue"))+
-  labs(
-    x = "Coefficient Estimate"
-  )+
-  theme(
-    text = element_text(family = "Helvetica", size = 10, face = "bold", color = "#2a475e"),
-    panel.grid = element_line(color = "#b4aea9"),
-    panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
-    plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
-    legend.background =  element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
-    legend.text = element_text(size = 15),
-    axis.title.x = element_text(size = 15),
-    axis.title.y = element_text(size = 15, FALSE),
-    axis.text.x = element_text(size = 13),
-    axis.text.y = element_text(size = 13)
-  )
-
-#VIP plot
-birthweight_lm |> 
-  vip()
-?vip
-
-birthweight_lm |> 
-
-
-
-
-
-
-
-
-
-
 # Model evaluation --------------------------------------------------------
 
 set.seed(150)
@@ -266,9 +182,9 @@ get_test_pred <- function(k) {
                               sexually_transmitted_infections_raw_value, uninsured_raw_value))
   
   lm_fit <- lm(low_birthweight_raw_value ~ adult_smoking_raw_value + adult_obesity_raw_value +
-               food_insecurity_raw_value + excessive_drinking_raw_value + child_mortality_raw_value +
-               physical_inactivity_raw_value + insufficient_sleep_raw_value + sexually_transmitted_infections_raw_value +
-               uninsured_raw_value, data = train_data)                           
+                 food_insecurity_raw_value + excessive_drinking_raw_value + child_mortality_raw_value +
+                 physical_inactivity_raw_value + insufficient_sleep_raw_value + sexually_transmitted_infections_raw_value +
+                 uninsured_raw_value, data = train_data)                           
   ridge_fit <- cv.glmnet(train_x, train_data$low_birthweight_raw_value, alpha = 0)
   lasso_fit <- cv.glmnet(train_x, train_data$low_birthweight_raw_value, alpha = 1)
   
@@ -305,6 +221,99 @@ test_pred_all |>
 
 
 
+
+
+# Linear Regression -------------------------------------------------------
+birthweight_lm <- lm(low_birthweight_raw_value ~ adult_smoking_raw_value + adult_obesity_raw_value + 
+                       food_insecurity_raw_value + excessive_drinking_raw_value + physical_inactivity_raw_value +
+                       insufficient_sleep_raw_value + sexually_transmitted_infections_raw_value + 
+                       uninsured_raw_value, data = healthdata_subset)
+summary(birthweight_lm)
+tidy(birthweight_lm)
+
+head(birthweight_lm$fitted.values)
+
+#Linear Model
+healthdata_subset |> 
+  mutate(pred_vals = predict(birthweight_lm)) |> 
+  ggplot(aes(x = pred_vals, y = low_birthweight_raw_value))+
+  geom_point(alpha = 0.5, size =3)+
+  geom_abline(slope = 1, intercept = 0, 
+              linetype = "dashed",
+              color = "red",
+              linewidth = 2)
+
+summary(birthweight_lm)
+
+
+healthdata_subset |> 
+  ggplot(aes(x=adult_obesity_raw_value))+
+  geom_histogram()
+
+healthdata_subset |> 
+  ggplot(aes(x=sexually_transmitted_infections_raw_value))+
+  geom_histogram()
+
+range(healthdata_subset$adult_obesity_raw_value)
+range(healthdata_subset$sexually_transmitted_infections_raw_value)
+
+
+#Residuals
+birthweight_lm |>
+  ggplot(aes(x = .fitted, y = .resid)) + 
+  geom_point(alpha = 0.5, size = 3) +
+  geom_hline(yintercept = 0, linetype = "dashed", 
+             color = "red", linewidth = 2) +
+  geom_smooth(se = FALSE)
+
+
+#Regression coefficients
+birthweight_lm |> 
+  tidy(conf.int = TRUE) |> 
+  mutate(term = str_remove(term, "_raw_value")) |> 
+  mutate(term = str_replace_all(term, "_", " ")) |>
+  mutate(term = str_to_sentence(term)) |> 
+  mutate(term = str_replace(term,"Sexually transmitted infections","STIs")) |> 
+  mutate(term = fct_reorder(term, estimate)) |> 
+  ggplot(aes(x = estimate, y = term,  
+             fill = estimate)) +
+  #ggplot(aes(x = estimate, y = term,  
+             #fill = estimate > 0))
+  geom_col(color = "white", show.legend = FALSE, width = 1) +
+  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0.2) +
+  #scale_fill_manual(values = c("indianred3", "deepskyblue3"))+
+  scale_fill_gradient2(low = "brown", mid = "lightgrey", high = "slateblue", midpoint = 0) +
+  #scale_color_gradient(low="blue", high="red")+
+  labs(
+    x = "Coefficient Estimate"
+  )+
+  theme(
+    text = element_text(family = "Helvetica", size = 15, face = "bold", color = "#2a475e"),
+    panel.grid = element_line(color = "#b4aea9"),
+    panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    legend.background =  element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    legend.text = element_text(size = 20),
+    axis.title.x = element_text(size = 20, color = "#2a475e"),
+    axis.title.y = element_text(size = 23, FALSE),
+    axis.text.x = element_text(size = 23, color = "#2a475e"),
+    axis.text.y = element_text(size = 20, color = "#2a475e")
+  )
+
+#VIP plot
+birthweight_lm |> 
+  vip()
+?vip
+
+
+
+
+
+
+
+
+
+
 #explain how the lambda was picked
 #Lambda was picked with cross validation
 #lambda min λ is the minimum mean cross-validated error
@@ -326,7 +335,7 @@ head(birthweight_lm$fitted.values)
 healthdata_subset |> 
   mutate(pred_vals = predict(birthweight_lm)) |> 
   ggplot(aes(x = pred_vals, y = low_birthweight_raw_value))+
-  geom_point(alpha = 0.5, size =3)+
+  geom_point(alpha = 0.3, size =4, color = "darkblue")+
   geom_abline(slope = 1, intercept = 0, 
               linetype = "dashed",
               color = "red",

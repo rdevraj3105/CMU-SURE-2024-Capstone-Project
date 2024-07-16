@@ -105,7 +105,7 @@ healthdata_subset |>
   cor()
 
 
-plot_grid(sleep_plot, smoke_plot)
+plot_grid(sleep_plot, smoke_plot, sti_plot, obesity_plot)
 
 library(cowplot)
 
@@ -283,29 +283,31 @@ healthdata_subset |>
         # state_abbreviation = fct_reorder(state_abbreviation, low_birthweight_raw_value)) |> 
   ggplot(aes(group=state_abbreviation)) +
   geom_segment(aes(x=state_abbreviation, xend=state_abbreviation, y=0, yend=low_birthweight_raw_value)) +
-  geom_point(aes(x=state_abbreviation,y=low_birthweight_raw_value, fill = binary_sleep),size=3, 
-             alpha=0.8, shape=21)+
+  geom_point(aes(x=state_abbreviation,y=low_birthweight_raw_value, fill = binary_sleep),size=4.5, 
+             alpha=0.60, shape=21)+
   #scale_y_continuous(breaks=seq(0,600,50))+
   scale_y_continuous(labels=percent_format())+
-  coord_polar()+
+  coord_flip()+
   theme(
     panel.grid.major = element_blank(),
     panel.border = element_blank(),
     legend.position = "bottom",
-    plot.title = element_text(size = 13, hjust = 0.5, vjust = 0.5, face = "bold", 
+    plot.title = element_text(size = 18, hjust = 0.5, vjust = 0.5, face = "bold", 
                               margin = margin(b = 0.2, unit = "cm")),
     axis.ticks = element_blank(),
     #axis.line = element_line(colour = "grey50"),
-    panel.grid = element_line(color = "#b4aea9"),
+    #panel.grid = element_line(color = "#b4aea9"),
     panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
     plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
-    axis.text.x = element_text(face="bold", color = "black"),
-    axis.text.y = element_text(face="bold", color="black"),
-    axis.title.y = element_text(face = "bold", color = "darkred"),
-    axis.title.x = element_text(face = "bold", color = "darkred",vjust = -0.85),
-    legend.background =  element_rect(fill = "#fbf9f4", color = "#fbf9f4")
+    axis.text.x = element_text(face="bold", color = "black", size = 15),
+    axis.text.y = element_text(face="bold", color="black", size = 11),
+    axis.title.y = element_text(face = "bold", color = "brown", size = 25),
+    axis.title.x = element_text(face = "bold", color = "brown",vjust = -0.85, size = 25),
+    legend.background =  element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    legend.text = element_text(size = 15),
+    legend.title = element_text(size = 18)
   ) +
-  scale_fill_manual(values = c("yes"="red","no"="darkgrey"))+
+  scale_fill_manual(values = c("yes"="brown1","no"="dimgrey"))+
   labs(
     x = "State",
     y = "Low Birthweight",
