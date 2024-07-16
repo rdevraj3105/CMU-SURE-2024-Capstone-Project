@@ -101,8 +101,6 @@ food_plot = birthweight_plot(food_insecurity_raw_value, "Food insecurity")
 sti_plot = birthweight_plot(sexually_transmitted_infections_raw_value, "Sexually Transmitted Infections")
 uninsured_plot = birthweight_plot(uninsured_raw_value, "Uninsured Adults")
 
-healthdata_subset |> 
-  cor()
 
 
 plot_grid(sleep_plot, smoke_plot, sti_plot, obesity_plot)
