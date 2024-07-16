@@ -60,7 +60,7 @@ library(patchwork)
 Data<- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv")
 
 
-na.omit(Data)
+# na.omit(Data)
 Updated_Data <- Data |> 
   clean_names() |> 
   slice(-1) |> 

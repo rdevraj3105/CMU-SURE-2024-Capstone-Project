@@ -3214,19 +3214,6 @@ window.Quarto = {
 <h2 class="anchored" data-anchor-id="exploratory-data-analysis-cleaning">Exploratory Data Analysis &amp; Cleaning</h2>
 <p>We performed some initial pre-processing and cleaning of the dataset before investigating the variables. The following scatterplots demonstrate the child mortality rate relationship between adult obesity, adult smoking, and excessive drinking. Excessive drinking seems to contribute to the least amount of child mortality. However, adult smoking and adult obesity are able to show an increase in percentage as it relates to an increase in child mortality. From this we can predict that adult obesity and adult smoking has the highest correlation towards child mortality. Moreover, adult smoking and child mortality have the highest correlation coefficient which is 0.58.</p>
 <div class="cell">
-<div class="cell-output cell-output-stdout">
-<pre><code># A tibble: 1 × 770
-  `State FIPS Code` `County FIPS Code` `5-digit FIPS Code` `State Abbreviation`
-  &lt;chr&gt;             &lt;chr&gt;              &lt;chr&gt;               &lt;chr&gt;               
-1 statecode         countycode         fipscode            state               
-# ℹ 766 more variables: Name &lt;chr&gt;, `Release Year` &lt;chr&gt;,
-#   `County Clustered (Yes=1/No=0)` &lt;chr&gt;, `Premature Death raw value` &lt;chr&gt;,
-#   `Premature Death numerator` &lt;chr&gt;, `Premature Death denominator` &lt;chr&gt;,
-#   `Premature Death CI low` &lt;chr&gt;, `Premature Death CI high` &lt;chr&gt;,
-#   `Premature Death flag (0 = No Flag/1=Unreliable/2=Suppressed)` &lt;chr&gt;,
-#   `Premature Death (AIAN)` &lt;chr&gt;, `Premature Death CI low (AIAN)` &lt;chr&gt;,
-#   `Premature Death CI high (AIAN)` &lt;chr&gt;, …</code></pre>
-</div>
 <div class="cell-output-display">
 <div>
 <figure class="figure">
@@ -3442,7 +3429,7 @@ Valiant           18.1   6  225 105 2.76 3.460 20.22  1  0    3    1</code></pre
 </div>
 <p>We can summarize model results with a table. For instance, suppose we fit a linear regression model:</p>
 <div class="cell">
-<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>model1 <span class="ot">&lt;-</span> <span class="fu">lm</span>(mpg <span class="sc">~</span> disp <span class="sc">+</span> hp <span class="sc">+</span> drat, <span class="at">data =</span> mtcars)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>model1 <span class="ot">&lt;-</span> <span class="fu">lm</span>(mpg <span class="sc">~</span> disp <span class="sc">+</span> hp <span class="sc">+</span> drat, <span class="at">data =</span> mtcars)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
 </div>
 <p>It is <em>not</em> appropriate to simply print <code>summary(model1)</code> into the report. If we want the reader to understand what models we have fit and what their results are, we should provide a nicely formatted table. A simple option is to use the <code>tidy()</code> function from the <code>broom</code> package to get a data frame of the model fit, and simply report that as a table.</p>
 <div class="cell">
