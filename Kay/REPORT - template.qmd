@@ -53,11 +53,12 @@ We performed some initial pre-processing and cleaning of the dataset before inve
 library(ggplot2)
 library(tidyverse)
 library(janitor)
-
-Data<- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv")
 library(scales)
 library(cowplot)
 library(patchwork)
+
+Data<- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv")
+
 
 na.omit(Data)
 Updated_Data <- Data |> 
@@ -75,6 +76,7 @@ Updated_Data2 <- Updated_Data|>
          child_mortality_raw_value= as.numeric(child_mortality_raw_value)) |> 
   filter(!is.na(adult_obesity_raw_value), !is.na(child_mortality_raw_value))
 
+
 Updated_Data3 <- Updated_Data2 |> 
   clean_names() |> 
   slice(-1) |> 
@@ -82,17 +84,18 @@ Updated_Data3 <- Updated_Data2 |>
          child_mortality_raw_value= as.numeric(child_mortality_raw_value)) |> 
   filter(!is.na(excessive_drinking_raw_value), !is.na(child_mortality_raw_value))
 
+
 obesity<- Updated_Data3 |> 
   ggplot(aes(x= adult_obesity_raw_value, y= child_mortality_raw_value))+
-  geom_point(color="brown", alpha=.5)+
+  geom_point(color="brown", alpha=.3)+
   geom_smooth(method= lm, color="black")+
   scale_x_continuous(labels=percent_format())+
   scale_y_continuous()+
-  labs(x= "Adult Obesity", y= "Child Mortaility", title= "Adult Obesity")+
-  theme(text= element_text(family="Helvetica", size=15, face="bold", color="#2A475E"),
+  labs(x= "Adult Obesity", y= "Child Mortality")+
+  theme(text= element_text(family="Helvetica", size=13, face="bold", color="#2A475E"),
         plot.title = element_text(
           family= "Helvetica",
-          size=17, 
+          size=15, 
           face= "bold", 
           color= "#2A475E", 
           hjust=.5
@@ -110,15 +113,15 @@ obesity<- Updated_Data3 |>
 
 smoking<- Updated_Data3 |> 
   ggplot(aes(x= adult_smoking_raw_value, y= child_mortality_raw_value))+
-  geom_point(color="brown", alpha=.5)+
+  geom_point(color="brown", alpha=.3)+
   geom_smooth(method= lm, color="black")+
   scale_x_continuous(labels=percent_format())+
   scale_y_continuous()+
-  labs(x= "Adult Smoking", y= "Child Mortaility",  title= "Adult Smoking")+
-  theme(text= element_text(family="Helvetica", size=15, face="bold", color="#2A475E"),
+  labs(x= "Adult Smoking", y= "Child Mortality")+
+  theme(text= element_text(family="Helvetica", size=13, face="bold", color="#2A475E"),
         plot.title = element_text(
           family= "Helvetica",
-          size=17, 
+          size=15, 
           face= "bold", 
           color= "#2A475E", 
           hjust=.5
@@ -136,15 +139,15 @@ smoking<- Updated_Data3 |>
 
 drinking<- Updated_Data3 |> 
   ggplot(aes(x= excessive_drinking_raw_value, y= child_mortality_raw_value))+
-  geom_point(color="brown", alpha=.5)+
+  geom_point(color="brown", alpha=.3)+
   geom_smooth(method= lm, color="black")+
   scale_x_continuous(labels=percent_format())+
   scale_y_continuous()+
-  labs(x= "Excessive Drinking", y= "Child Mortaility",  title= "Excessive Drinking")+
-  theme(text= element_text(family="Helvetica", size=15, face="bold", color="#2A475E"),
+  labs(x= "Excessive Drinking", y= "Child Mortality")+
+  theme(text= element_text(family="Helvetica", size= 13, face="bold", color="#2A475E"),
         plot.title = element_text(
           family= "Helvetica",
-          size=17, 
+          size=15, 
           face= "bold", 
           color= "#2A475E", 
           hjust=.5
@@ -167,14 +170,143 @@ The following scatterplots are a glimpse at the relationship between low birthwe
 
 
 ```{r}
-#insert Rohan's scatterplot code here
+# low birthweight scatterplots
+
+theme_set(theme_light())
+healthdata <- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv") |> 
+  slice(-1) |> 
+  clean_names()
+
+healthdata_subset <- healthdata |> 
+  select(state_abbreviation, name,county_clustered_yes_1_no_0, release_year, adult_smoking_raw_value, adult_obesity_raw_value, 
+         food_insecurity_raw_value, excessive_drinking_raw_value, child_mortality_raw_value,
+         physical_inactivity_raw_value,insufficient_sleep_raw_value, low_birthweight_raw_value, 
+        sexually_transmitted_infections_raw_value, uninsured_raw_value) |> 
+  mutate(across(ends_with('raw_value'), as.numeric)) |> 
+  filter(county_clustered_yes_1_no_0 %in% c(0,1)) |> 
+  na.omit()
+
+birthweight_plot <- function(var_name, var_label){
+  plot <- healthdata_subset |>
+    ggplot(aes(x= {{var_name}}, y=low_birthweight_raw_value))+
+    geom_point(alpha =0.4, color = "brown")+
+   #geom_point(size = 3, alpha = 0.3, color = "brown") + 
+    geom_smooth(method = lm, color = "#2a475e") +
+    #geom_density2d() +
+    #coord_fixed() +
+    #theme(legend.position = "bottom")+
+    #geom_rug(alpha = 0.5, color = "#2a475e")+
+    scale_x_continuous(labels=percent_format())+
+    scale_y_continuous(labels=percent_format())+
+  labs(x = paste("Proportion of ", var_label),
+       y = "Proportion of low birthweight",
+       title = paste0(var_label, " vs. Low Birthweight"))+
+  theme(text = element_text(family = "Helvetica", size = 6, face = "bold", color = "#2a475e"),
+        plot.title = element_text(
+          family = "Helvetica", 
+          size = 5,
+          face = "bold",
+          color = "#2a475e",
+          hjust = 0.5
+        ))+
+  theme(
+    axis.ticks = element_blank(),
+    axis.line = element_line(colour = "grey50"),
+    panel.grid = element_line(color = "#b4aea9"),
+    #panel.grid.minor = element_blank(),
+    #panel.grid.major.x = element_blank(),
+    #panel.grid.major.y = element_blank(),
+    panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    text = element_text(family = "Helvetica", size = 10, 
+                        face = "bold", color = "#2a475e"),
+    plot.title = element_text(
+            family = "Helvetica", 
+            size = 12,
+            face = "bold",
+            color = "#2a475e",
+            hjust = 0.5))
+  return(plot)
+}
+
+
+smoke_plot = birthweight_plot(adult_smoking_raw_value, "Adult Smoking")
+drinking_plot = birthweight_plot(excessive_drinking_raw_value, "Adult Drinking")
+obesity_plot = birthweight_plot(adult_obesity_raw_value, "Adult Obesity")
+inactivity_plot = birthweight_plot(physical_inactivity_raw_value, "Physical Inactivity")
+sleep_plot = birthweight_plot(insufficient_sleep_raw_value, "Insufficient Sleep")
+food_plot = birthweight_plot(food_insecurity_raw_value, "Food insecurity")
+sti_plot = birthweight_plot(sexually_transmitted_infections_raw_value, "Sexually Transmitted Infections")
+uninsured_plot = birthweight_plot(uninsured_raw_value, "Uninsured Adults")
+
+
+plot_grid(smoke_plot, sleep_plot, obesity_plot, inactivity_plot)
+
+
+
+
 ```
 
 
 The below graph illustrates the percentage of low birthweight births by state, and is colored by the percentage of the county population reporting insufficient sleep. The red points represent counties with over 75% of the population reporting insufficient sleep. Generally, counties that have a higher percentage of low birthweight births also have a higher percentage of insufficient sleep across the population. The red points are primarily to the right side of the graph, indicating an association between low birthweight and insufficient sleep. 
 
 ```{r}
-#insert Rohans lollipop graph
+#insufficient sleep lollipop graph
+
+healthdata_subset <- healthdata |> 
+  select(state_abbreviation, name,county_clustered_yes_1_no_0, release_year, adult_smoking_raw_value, adult_obesity_raw_value, 
+         food_insecurity_raw_value, excessive_drinking_raw_value, child_mortality_raw_value,
+         physical_inactivity_raw_value,insufficient_sleep_raw_value, low_birthweight_raw_value, 
+        sexually_transmitted_infections_raw_value, uninsured_raw_value) |> 
+  mutate(across(ends_with('raw_value'), as.numeric)) |> 
+  filter(county_clustered_yes_1_no_0 %in% c(0,1)) |> 
+  na.omit()
+
+healthdata_subset <- healthdata_subset |> 
+  mutate(binary_child_mortality = as.factor(ifelse(child_mortality_raw_value >=62, "yes", "no")))
+
+
+healthdata_subset <- healthdata_subset |> 
+  mutate(binary_sleep = as.factor(ifelse(insufficient_sleep_raw_value >=0.37, "yes", "no")))
+
+healthdata_subset <- healthdata_subset |> 
+  mutate(binary_drinking = as.factor(ifelse(excessive_drinking_raw_value >=0.19, "yes", "no")))
+
+
+healthdata_subset |> 
+  mutate(state_abbreviation=factor(state_abbreviation), 
+         state_abbreviation = fct_reorder(state_abbreviation, low_birthweight_raw_value)) |> 
+  ggplot(aes(group=state_abbreviation)) +
+  geom_segment(aes(x=state_abbreviation, xend=state_abbreviation, y=0, yend=low_birthweight_raw_value)) +
+  geom_point(aes(x=state_abbreviation,y=low_birthweight_raw_value, fill = binary_sleep),size=1.5, 
+             alpha=0.75, shape=21)+
+  #scale_y_continuous(breaks=seq(0,600,50))+
+  scale_y_continuous(labels=percent_format())+
+  coord_flip()+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    legend.position = "bottom",
+    plot.title = element_text(size = 10, hjust = 0.5, vjust = 0.5, face = "bold", 
+                              margin = margin(b = 0.2, unit = "cm")),
+    axis.ticks = element_blank(),
+    #axis.line = element_line(colour = "grey50"),
+    panel.grid = element_line(color = "#b4aea9"),
+    panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    axis.text.x = element_text(face="bold", color = "black"),
+    axis.text.y = element_text(face="bold", color="black", size = 5),
+    axis.title.y = element_text(face = "bold", color = "darkred"),
+    axis.title.x = element_text(face = "bold", color = "darkred",vjust = -0.85),
+    legend.background =  element_rect(fill = "#fbf9f4", color = "#fbf9f4")
+  ) +
+  scale_fill_manual(values = c("yes"="red","no"="darkgrey"))+
+  labs(
+    x = "State",
+    y = "Low Birthweight",
+    fill = "Insufficient sleep in \u{2265} 75% of county population ",
+  )
+
 ```
 
 
@@ -189,18 +321,16 @@ This can include tables and plots showing your results, as well as text describi
 In this report, we examined a multitude of adult health behaviors and their relationship to child mortality and low birthweight.
 
 **Limitations** 
+
 The dataset only included three variables specific to juvenile health, two of which we chose to focus on. Child mortality rate is a relatively rare event and will experience small changes, especially in small communities, which may be hard to detect. Counties with smaller populations may also experience a lot of relative change in mortality rates from year to year, often due to normal variation rather than the true underlying risk for child mortality. The dataset consisted of county level population data, rather than data on parent-to-child relationships. This limited the conclusions we could make from trends in the data. 
 
 **Future Work**
+
 Our work focuses on predicting juvenile health outcomes from adult health behaviors in the population. For future analysis of this topic, better results can persist if data can be found specifically on parent health behaviors and child outcomes. Also, looking at data by state can best help infer which areas need more focus. Furthermore, investigation should be done into why excessive drinking and child mortality have a strong negative correlation. This is an important area to focus on being that this emphasizes some of the limitations within the project. For example, factors such as gender may be influencing the results. 
 
 Based on our research for future studies, using demographic, income, and gender can all be contributing variables as it pertains to the outcome of low birthweight and child mortality. Having variables categorized by age can contribute to a bigger significance towards variables used. Age can give a further look into which age group has the highest correlation towards the variables used. 
 
 ## Appendix
-
-
-
-
 
 
 **(Feel free to remove this section when you submit)**
