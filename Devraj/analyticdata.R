@@ -53,7 +53,7 @@ birthweight_plot <- function(var_name, var_label){
     geom_point(alpha =0.4, color = "brown")+
    #geom_point(size = 3, alpha = 0.3, color = "brown") + 
     geom_smooth(method = lm, color = "#2a475e") +
-    stat_cor(method="pearson")+
+    #stat_cor(method="pearson")+
     #geom_density2d() +
     #coord_fixed() +
     #theme(legend.position = "bottom")+
@@ -74,7 +74,7 @@ birthweight_plot <- function(var_name, var_label){
   theme(
     axis.ticks = element_blank(),
     axis.line = element_line(colour = "grey50"),
-    panel.grid = element_line(color = "#b4aea9"),
+    #panel.grid = element_line(color = "#b4aea9"),
     #panel.grid.minor = element_blank(),
     #panel.grid.major.x = element_blank(),
     #panel.grid.major.y = element_blank(),
@@ -102,8 +102,7 @@ sti_plot = birthweight_plot(sexually_transmitted_infections_raw_value, "Sexually
 uninsured_plot = birthweight_plot(uninsured_raw_value, "Uninsured Adults")
 
 
-
-plot_grid(sleep_plot, smoke_plot, sti_plot, obesity_plot)
+plot_grid(sleep_plot, smoke_plot)
 
 library(cowplot)
 
@@ -277,8 +276,8 @@ View(healthdata_subset)
 
 #Sleep
 healthdata_subset |> 
- #mutate(state_abbreviation=factor(state_abbreviation), 
-        # state_abbreviation = fct_reorder(state_abbreviation, low_birthweight_raw_value)) |> 
+ mutate(state_abbreviation=factor(state_abbreviation), 
+        state_abbreviation = fct_reorder(state_abbreviation, low_birthweight_raw_value)) |> 
   ggplot(aes(group=state_abbreviation)) +
   geom_segment(aes(x=state_abbreviation, xend=state_abbreviation, y=0, yend=low_birthweight_raw_value)) +
   geom_point(aes(x=state_abbreviation,y=low_birthweight_raw_value, fill = binary_sleep),size=4.5, 

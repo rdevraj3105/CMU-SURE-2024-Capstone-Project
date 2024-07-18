@@ -60,20 +60,68 @@ birthweight_lm |>
 
 #summary(birthweight_lm)
 
-#birthweight_ridge <- glmnet(model_predictors, model_response_birthweight, alpha = 0)
+birthweight_ridge <- glmnet(model_predictors, model_response_birthweight, alpha = 0)
 
-#plot(birthweight_ridge, xvar = "lambda")
+plot(birthweight_ridge, xvar = "lambda")
 
+birthweight_ridge_cv <- cv.glmnet(model_predictors, model_response_birthweight, alpha = 0)
 
 new_labels <- c("Adult Smoking" = adult_smoking_raw_value, "Adult Obesity" = adult_obesity_raw_value, 
                 "Food Insecurity" = food_insecurity_raw_value, "Excessive Drinking" = excessive_drinking_raw_value,
                 "Physical Inactivity" = physical_inactivity_raw_value, "Insufficient Sleep" = insufficient_sleep_raw_value, 
                 "STIs" = sexually_transmitted_infections_raw_value, "Uninsured" = uninsured_raw_value) 
 
+
+# Ridge Regression --------------------------------------------------------
+
+tidy_ridge_coef <- tidy(birthweight_ridge_cv$glmnet.fit)
+tidy_ridge_coef |> 
+  mutate(term = str_remove(term, "_raw_value")) |> 
+  mutate(term = str_replace_all(term, "_", " ")) |> 
+  mutate(term = str_to_sentence(term)) |> 
+  ggplot(aes(x = lambda, y = estimate, group = term, color = term)) +
+  scale_x_log10() +
+  geom_line(alpha = 1, size =1) +
+  geom_vline(xintercept = birthweight_ridge_cv$lambda.min) +
+  geom_vline(xintercept = birthweight_ridge_cv$lambda.1se, linetype = "dashed", color = "black", size =0.5)+
+  labs(x = "Lambda",
+       y = "Coefficient Estimate",
+       color = "")+
+  geom_vline(xintercept = birthweight_ridge_cv$lambda.min) +
+  geom_vline(xintercept = birthweight_ridge_cv$lambda.1se, 
+             linetype = "dashed", color = "black")+
+  theme(
+    text = element_text(family = "Helvetica", size = 10, face = "bold", color = "#2a475e"),
+    panel.grid = element_line(color = "#b4aea9"),
+    panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    legend.background =  element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    legend.text = element_text(size = 15),
+    axis.title.x = element_text(size = 15),
+    axis.title.y = element_text(size = 15),
+    axis.text.x = element_text(size = 13),
+    axis.text.y = element_text(size = 13)
+  )
+
+
+
+
+
+
+
+
+
+
+
+
+
 birthweight_lasso_cv <- cv.glmnet(model_predictors, model_response_birthweight, alpha = 1)
 
 
 tidy_lasso_coef <- tidy(birthweight_lasso_cv$glmnet.fit)
+
+
+# Lasso Regression coefficients -------------------------------------------
 
 tidy_lasso_coef |> 
   mutate(term = str_remove(term, "_raw_value")) |> 
@@ -99,7 +147,6 @@ tidy_lasso_coef |>
     axis.title.y = element_text(size = 15),
     axis.text.x = element_text(size = 13),
     axis.text.y = element_text(size = 13)
-    
   )
 
 tidy_lasso_cv <- tidy(birthweight_lasso_cv)
@@ -162,6 +209,16 @@ lasso_final |>
 #largest value of lambda such that error is within 1 standard error of the cross-validated errors for lambda.min.
 
 
+
+
+
+
+
+
+
+
+
+
 # Model evaluation --------------------------------------------------------
 
 set.seed(150)
@@ -212,7 +269,39 @@ test_pred_all |>
   stat_summary(fun = mean, geom = "point", 
                color = "red", size = 4) + 
   stat_summary(fun.data = mean_se, geom = "errorbar", 
-               color = "red", width = 0.2)
+               color = "red", width = 0.2)+
+  theme(text = element_text(family = "Helvetica", size = 8, face = "bold", color = "#2a475e"),
+        plot.title = element_text(
+          family = "Helvetica", 
+          size = 10,
+          face = "bold",
+          color = "#2a475e",
+          hjust = 0.5
+        ))+
+  scale_x_discrete(labels = c("lasso_pred" = "Lasso Regression", "lm_pred"="Linear Regression", "ridge_pred"="Ridge Regression"))+
+  theme(
+    axis.ticks = element_blank(),
+    axis.line = element_line(colour = "grey50"),
+    panel.grid = element_line(color = "#b4aea9"),
+    #panel.grid.minor = element_blank(),
+    #panel.grid.major.x = element_blank(),
+    #panel.grid.major.y = element_blank(),
+    panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    text = element_text(family = "Helvetica", size = 18, 
+                        face = "bold", color = "#2a475e"),
+    plot.title = element_text(
+      family = "Helvetica", 
+      size = 20,
+      face = "bold",
+      color = "#2a475e",
+      hjust = 0.5),
+      axis.title.y = element_text(vjust = 1.3))+
+  labs(
+    x="Model Type",
+    y = "Root Mean Squared Error"
+  )
+  
 
 
 
@@ -300,61 +389,7 @@ birthweight_lm |>
     axis.text.y = element_text(size = 20, color = "#2a475e")
   )
 
-#VIP plot
-birthweight_lm |> 
-  vip()
-?vip
 
-
-
-
-
-
-
-
-
-
-#explain how the lambda was picked
-#Lambda was picked with cross validation
-#lambda min λ is the minimum mean cross-validated error
-#largest value of lambda such that error is within 1 standard error of the cross-validated errors for lambda.min.
-
-
-
-# Linear Regression -------------------------------------------------------
-birthweight_lm <- lm(low_birthweight_raw_value ~ adult_smoking_raw_value + adult_obesity_raw_value + 
-                       food_insecurity_raw_value + excessive_drinking_raw_value + physical_inactivity_raw_value +
-                       insufficient_sleep_raw_value + sexually_transmitted_infections_raw_value + 
-                       uninsured_raw_value, data = healthdata_subset)
-summary(birthweight_lm)
-tidy(birthweight_lm)
-train_preds <- predict(birthweight_lm)
-head(train_preds)
-head(birthweight_lm$fitted.values)
-
-healthdata_subset |> 
-  mutate(pred_vals = predict(birthweight_lm)) |> 
-  ggplot(aes(x = pred_vals, y = low_birthweight_raw_value))+
-  geom_point(alpha = 0.3, size =4, color = "darkblue")+
-  geom_abline(slope = 1, intercept = 0, 
-              linetype = "dashed",
-              color = "red",
-              linewidth = 2)
-
-
-
-
-
-
-healthdata_subset <- healthdata_subset |> 
-  mutate(binary_child_mortality = as.factor(ifelse(child_mortality_raw_value >=62, "yes", "no")))
-
-
-healthdata_subset <- healthdata_subset |> 
-  mutate(binary_sleep = as.factor(ifelse(insufficient_sleep_raw_value >=0.37, "yes", "no")))
-
-healthdata_subset <- healthdata_subset |> 
-  mutate(binary_drinking = as.factor(ifelse(excessive_drinking_raw_value >=0.19, "yes", "no")))
 
 
 
