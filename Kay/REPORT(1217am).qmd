@@ -1,0 +1,868 @@
+---
+title: "Impact of Adult Health-Related Practices on Juvenile Health Outcomes"
+author:
+  - Brooke Benton
+  - Rohan Devraj  
+  - Jade Kay
+  - Jessica Lambert 
+date: "July 26, 2024" 
+toc: true
+format:  
+  html:
+    theme: cosmo
+    html-math-method: katex
+    self-contained: true
+execute:
+  echo: false
+  warning: false
+  message: false
+editor: 
+  markdown: 
+    wrap: sentence
+---
+
+------------------------------------------------------------------------
+
+## Introduction
+
+The health behaviors of adults in a community can have a profound impact on their children’s health outcomes. Juvenile quality and length of life can be impacted by the behaviors of the adults around them, such as smoking, drinking, poor diet, physical inactivity, and a variety of other factors. It is crucial to identify and address these health outcomes as they impact the overall wellbeing of an individual which affects their everyday life. These insights can be utilized to identify intergenerational health impacts to provide early intervention and prevention of harmful juvenile outcomes as well as influence new policy and education. In this report, we analyze the impact of a variety of adult health behaviors on child mortality rate and low birthweight on a county level, and how such factors affect these specific health outcomes. 
+
+We decided to use low birthweight as a measure of juvenile outcomes due to the risk of future negative health problems and death. According to the University of Wisconsin Population Health Institute, “infants born with low birthweight have approximately 20 times greater chance of dying than those with normal birth weight” (County Health Rankings 2024). Moreover, infants who survive low birthweight at birth “may face adverse health outcomes such as decreased growth, lower IQ, impaired language development, and chronic conditions (e.g., obesity, diabetes, cardiovascular disease) during adulthood” (County Health Rankings 2024). We also chose to use the child mortality rate variable as a measure of  juvenile outcome. While childhood mortality is somewhat rare, mortality rates illustrate the most severe consequence of negative health behaviors and can point to the more significant behaviors that need to be addressed. 
+
+## The Data
+
+The data utilized is from the County Health Rankings & Roadmaps sourced by the University of Wisconsin Population Health Institute. This dataset includes health and socioeconomic data at county level across the United States from 2024. Our key juvenile health outcomes, child mortality rate and low birthweight, are measured as number of deaths among residents under age 20 per 100,000 population and percentage of live births less than 2,500 grams, respectively. For this report we focused primarily on the following adult health behaviors: 
+
+
+- Insufficient sleep: percentage of adults who report fewer than 7 hours of sleep on average
+- Excessive drinking: percentage of adults reporting binge or heavy drinking
+- Adult smoking: percentage of adults who are current smokers
+- Food Insecurity: percentage of adults who lack adequate access to food
+- Uninsured: percentage of adult population under age 65 without health insurance
+- Sexually Transmitted Infections: number of newly diagnosed chlamydia cases per 100,000 population
+- Physical Inactivity: percentage of adults reporting no leisure-time physical activity 
+- Adult Obesity: percentage of the adult population that reports a body mass index greater than or equal to 30 kg/m^2^
+
+
+## Exploratory Data Analysis
+
+We performed some initial pre-processing and cleaning of the dataset before investigating the variables. The following scatterplots demonstrate the child mortality rate relationship between adult obesity, adult smoking, and excessive drinking. Excessive drinking appears to have a strong negative correlation with child mortality, and we will discuss this trend later in the report. However, adult smoking and adult obesity demonstrate a moderately strong linear relationship, suggesting that when these increase, the rate of child mortality also increases. 
+
+
+```{r}
+#| fig-width: 9
+#| fig-height: 5
+#| fig-cap: "Figure 1: Relationships between child mortality and a sample of our predictor variables"
+
+#Child Mortality scatterplots
+library(ggplot2)
+library(tidyverse)
+library(janitor)
+library(scales)
+library(cowplot)
+library(patchwork)
+library(ggpubr)
+
+Data<- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv")
+
+
+# na.omit(Data)
+Updated_Data <- Data |> 
+  clean_names() |> 
+  slice(-1) |> 
+  mutate(adult_smoking_raw_value=as.numeric(adult_smoking_raw_value),
+         child_mortality_raw_value= as.numeric(child_mortality_raw_value), infant_mortality_raw_value= as.numeric(infant_mortality_raw_value)) |> 
+  filter(!is.na(adult_smoking_raw_value), !is.na(child_mortality_raw_value)) |> 
+  filter(county_clustered_yes_1_no_0 %in% c(0,1))
+
+Updated_Data2 <- Updated_Data|> 
+  clean_names() |> 
+  slice(-1) |> 
+  mutate(adult_obesity_raw_value=as.numeric(adult_obesity_raw_value),
+         child_mortality_raw_value= as.numeric(child_mortality_raw_value)) |> 
+  filter(!is.na(adult_obesity_raw_value), !is.na(child_mortality_raw_value))
+
+
+Updated_Data3 <- Updated_Data2 |> 
+  clean_names() |> 
+  slice(-1) |> 
+  mutate(excessive_drinking_raw_value=as.numeric(excessive_drinking_raw_value),
+         child_mortality_raw_value= as.numeric(child_mortality_raw_value)) |> 
+  filter(!is.na(excessive_drinking_raw_value), !is.na(child_mortality_raw_value))
+
+
+obesity<- Updated_Data3 |> 
+  ggplot(aes(x= adult_obesity_raw_value, y= child_mortality_raw_value))+
+  geom_point(color="brown", alpha=.3)+
+  geom_smooth(method= lm, color="black")+
+  stat_cor(method="pearson")+
+  scale_x_continuous(labels=percent_format())+
+  scale_y_continuous()+
+  labs(x= "Adult Obesity", y= "Child Mortality")+
+  theme(text= element_text(family="Helvetica", size=13, face="bold", color="#2A475E"),
+        plot.title = element_text(
+          family= "Helvetica",
+          size=15, 
+          face= "bold", 
+          color= "#2A475E", 
+          hjust=.5
+        ))+
+  theme(
+    axis.ticks= element_blank(), 
+    axis.line= element_line(colour="grey50"), 
+    panel.grid= element_line(color="#B4AEA9"),
+    panel.grid.minor = element_blank(), 
+    panel.grid.major.x = element_blank(), 
+    panel.grid.major.y = element_blank(), 
+    panel.background = element_rect(fill="#FBF9F4", color= "#FBF9F4"), 
+    plot.background = element_rect(fill="#FBF9F4", color= "#FBF9F4")
+ )
+
+smoking<- Updated_Data3 |> 
+  ggplot(aes(x= adult_smoking_raw_value, y= child_mortality_raw_value))+
+  geom_point(color="brown", alpha=.3)+
+  geom_smooth(method= lm, color="black")+
+  stat_cor(method="pearson")+
+  scale_x_continuous(labels=percent_format())+
+  scale_y_continuous()+
+  labs(x= "Adult Smoking", y= "Child Mortality")+
+  theme(text= element_text(family="Helvetica", size=13, face="bold", color="#2A475E"),
+        plot.title = element_text(
+          family= "Helvetica",
+          size=15, 
+          face= "bold", 
+          color= "#2A475E", 
+          hjust=.5
+        ))+
+  theme(
+    axis.ticks= element_blank(), 
+    axis.line= element_line(colour="grey50"), 
+    panel.grid= element_line(color="#B4AEA9"),
+    panel.grid.minor = element_blank(), 
+    panel.grid.major.x = element_blank(), 
+    panel.grid.major.y = element_blank(), 
+    panel.background = element_rect(fill="#FBF9F4", color= "#FBF9F4"), 
+    plot.background = element_rect(fill="#FBF9F4", color= "#FBF9F4")
+  )
+
+drinking<- Updated_Data3 |> 
+  ggplot(aes(x= excessive_drinking_raw_value, y= child_mortality_raw_value))+
+  geom_point(color="brown", alpha=.3)+
+  geom_smooth(method= lm, color="black")+
+  stat_cor(method="pearson")+
+  scale_x_continuous(labels=percent_format())+
+  scale_y_continuous()+
+  labs(x= "Excessive Drinking", y= "Child Mortality")+
+  theme(text= element_text(family="Helvetica", size= 13, face="bold", color="#2A475E"),
+        plot.title = element_text(
+          family= "Helvetica",
+          size=15, 
+          face= "bold", 
+          color= "#2A475E", 
+          hjust=.5
+        ))+
+  theme(
+    axis.ticks= element_blank(), 
+    axis.line= element_line(colour="grey50"), 
+    panel.grid= element_line(color="#B4AEA9"),
+    panel.grid.minor = element_blank(), 
+    panel.grid.major.x = element_blank(), 
+    panel.grid.major.y = element_blank(), 
+    panel.background = element_rect(fill="#FBF9F4", color= "#FBF9F4"), 
+    plot.background = element_rect(fill="#FBF9F4", color= "#FBF9F4")
+  )
+
+plot_grid(drinking+smoking+obesity)
+
+
+```
+
+The following scatterplots are a glimpse at the relationship between low birthweight and some adult health behaviors: adult smoking, insufficient sleep, adult obesity, and food insecurity. All four scatterplots demonstrate a moderately strong positive correlation. Of the scatterplots shown, insufficient sleep has the strongest relationship with low birthweight with a correlation coefficient of 0.59 indicating that more insufficient sleep is associated with a higher likelihood of low birthweight. From this elementary data analysis, many of our hypotheses seem to be confirmed, since these detrimental adult behaviors are showing an increase in the rate of low birthweight. In the modeling section of this report, we will attempt to pinpoint which specific predictors are the strongest indicators of low birthweight.
+
+
+```{r}
+#| fig-width: 9
+#| fig-height: 7
+#| fig-cap: "Figure 2: Relationships between low birthweight and a sample of our predictor variables"
+
+library(tidyverse)
+healthdata <- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv")
+
+library(ggpubr)
+library(janitor)
+library(tidyverse)
+library(scales)
+library(cowplot)
+library(ggExtra)
+
+healthdata <- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv") |> 
+  slice(-1) |> 
+  clean_names()
+
+healthdata_subset <- healthdata |> 
+  select(state_abbreviation, name,county_clustered_yes_1_no_0, release_year, adult_smoking_raw_value, adult_obesity_raw_value, 
+         food_insecurity_raw_value, excessive_drinking_raw_value, child_mortality_raw_value,
+         physical_inactivity_raw_value,insufficient_sleep_raw_value, low_birthweight_raw_value, 
+        sexually_transmitted_infections_raw_value, uninsured_raw_value) |> 
+  mutate(across(ends_with('raw_value'), as.numeric)) |> 
+  filter(county_clustered_yes_1_no_0 %in% c(0,1)) |> 
+  na.omit()
+
+birthweight_plot <- function(var_name, var_label){
+  plot <- healthdata_subset |>
+    ggplot(aes(x= {{var_name}}, y=low_birthweight_raw_value))+
+    geom_point(alpha =0.4, color = "brown")+
+   #geom_point(size = 3, alpha = 0.3, color = "brown") + 
+    geom_smooth(method = lm, color = "#2a475e") +
+    stat_cor(method="pearson")+
+    #geom_density2d() +
+    #coord_fixed() +
+    #theme(legend.position = "bottom")+
+    #geom_rug(alpha = 0.5, color = "#2a475e")+
+    scale_x_continuous(labels=percent_format())+
+    scale_y_continuous(labels=percent_format())+
+  labs(x = paste("Proportion of ", var_label),
+       y = "Proportion of low birthweight")+
+  theme(text = element_text(family = "Helvetica", size = 10, face = "bold", color = "#2a475e"),
+        plot.title = element_text(
+          family = "Helvetica", 
+          size = 15,
+          face = "bold",
+          color = "#2a475e",
+          hjust = 0.5
+        ))+
+  theme(
+    axis.ticks = element_blank(),
+    axis.line = element_line(colour = "grey50"),
+    panel.grid= element_blank(),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank(),
+    panel.grid.major.y = element_blank(),
+    panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    text = element_text(family = "Helvetica", size = 10, 
+                        face = "bold", color = "#2a475e"),
+    plot.title = element_text(
+            family = "Helvetica", 
+            size = 15,
+            face = "bold",
+            color = "#2a475e",
+            hjust = 0.5))
+  return(plot)
+}
+
+
+smoke_plot = birthweight_plot(adult_smoking_raw_value, "Adult Smoking")
+drinking_plot = birthweight_plot(excessive_drinking_raw_value, "Adult Drinking")
+obesity_plot = birthweight_plot(adult_obesity_raw_value, "Adult Obesity")
+inactivity_plot = birthweight_plot(physical_inactivity_raw_value, "Physical Inactivity")
+sleep_plot = birthweight_plot(insufficient_sleep_raw_value, "Insufficient Sleep")
+food_plot = birthweight_plot(food_insecurity_raw_value, "Food insecurity")
+sti_plot = birthweight_plot(sexually_transmitted_infections_raw_value, "Sexually Transmitted Infections")
+uninsured_plot = birthweight_plot(uninsured_raw_value, "Uninsured Adults")
+
+
+
+plot_grid(sleep_plot, smoke_plot, food_plot, obesity_plot)
+
+
+```
+
+
+Not only did we analyze the relationship between these adult behaviors and child outcomes, we also explored such trends across the nation. The graph below illustrates the percentage of low birthweight births by state and is colored by the percentage of the county population reporting insufficient sleep. The red points represent counties with over 75% of the population reporting insufficient sleep. Generally, counties that have a higher percentage of low birthweight births are also counties with a higher percentage of insufficient sleep across the population. The red points are primarily to the right side of the graph for most states, indicating an association between low birthweight and insufficient sleep. 
+
+
+```{r}
+#|fig-width: 8
+#| fig-height: 8
+#| fig-cap: "Figure 3: Percentage of low birthweight births by state, colored by the percentage of the county population reporting insufficient sleep"
+
+#insufficient sleep lollipop graph
+
+healthdata <- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv") |> 
+  slice(-1) |> 
+  clean_names()
+ 
+
+healthdata_subset <- healthdata |> 
+  select(state_abbreviation, name,county_clustered_yes_1_no_0, release_year, adult_smoking_raw_value, adult_obesity_raw_value, 
+         food_insecurity_raw_value, excessive_drinking_raw_value, child_mortality_raw_value,
+         physical_inactivity_raw_value,insufficient_sleep_raw_value, low_birthweight_raw_value, 
+        sexually_transmitted_infections_raw_value, uninsured_raw_value) |> 
+  mutate(across(ends_with('raw_value'), as.numeric)) |> 
+  filter(county_clustered_yes_1_no_0 %in% c(0,1)) |> 
+  na.omit()
+
+healthdata_subset <- healthdata_subset |> 
+  mutate(binary_child_mortality = as.factor(ifelse(child_mortality_raw_value >=62, "yes", "no")))
+
+
+healthdata_subset <- healthdata_subset |> 
+  mutate(binary_sleep = as.factor(ifelse(insufficient_sleep_raw_value >=0.37, "yes", "no")))
+
+healthdata_subset <- healthdata_subset |> 
+  mutate(binary_drinking = as.factor(ifelse(excessive_drinking_raw_value >=0.19, "yes", "no")))
+
+#Sleep
+healthdata_subset |> 
+ mutate(state_abbreviation=factor(state_abbreviation), 
+        state_abbreviation = fct_reorder(state_abbreviation, low_birthweight_raw_value)) |> 
+  ggplot(aes(group=state_abbreviation)) +
+  geom_segment(aes(x=state_abbreviation, xend=state_abbreviation, y=0, yend=low_birthweight_raw_value)) +
+  geom_point(aes(x=state_abbreviation,y=low_birthweight_raw_value, fill = binary_sleep),size= 2, 
+             alpha=0.65, shape=21)+
+  #scale_y_continuous(breaks=seq(0,600,50))+
+  scale_y_continuous(labels=percent_format())+
+  coord_flip()+
+  theme(
+    panel.grid.major = element_blank(),
+    panel.border = element_blank(),
+    legend.position = "bottom",
+    plot.title = element_text(size = 14, hjust = 0.5, vjust = 0.5, face = "bold", 
+                              margin = margin(b = 0.2, unit = "cm")),
+    axis.ticks = element_blank(),
+    #axis.line = element_line(colour = "grey50"),
+    #panel.grid = element_line(color = "#b4aea9"),
+    panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    axis.text.x = element_text(face="bold", color = "black", size = 10),
+    axis.text.y = element_text(face="bold", color="black", size = 6),
+    axis.title.y = element_text(face = "bold", color = "brown", size = 12),
+    axis.title.x = element_text(face = "bold", color = "brown",vjust = -0.85, size = 12),
+    legend.background =  element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    legend.text = element_text(size = 10),
+    legend.title = element_text(size = 10)
+  ) +
+  scale_fill_manual(values = c("yes"="brown1","no"="dimgrey"))+
+  labs(
+    x = "State",
+    y = "Low Birthweight",
+    fill = "Insufficient sleep in \u{2265} 75% of county population ",
+  )
+
+```
+
+
+## Methods and Modeling
+
+To predict low birthweight in counties across the United States, we evaluated 3 models: lasso regression, ridge regression, and linear regression. Lasso regression and ridge regression were chosen to determine the effect of regularization and variable selection on modeling by introducing a shrinkage penalty. The variables considered for these include the following: adult smoking, adult obesity, food insecurity, excessive drinking, physical inactivity, insufficient sleep, sexually transmitted infections, and the percentage of uninsured. In all cases, we filtered for observations that had complete data. The data was also standardized for lasso and ridge regression with glmnet in R. For the lasso and ridge regression models cross validation was used to select the value of 𝜆 with cv.glmnet() which uses 10-folds by default; alpha values of 0 and 1 were set respectively. For example, the plot below depicts how the coefficient estimates respond to different values of lambda with lasso regression and ridge regression. The solid line is the smallest 𝜆 value that gives the minimum mean cross-validated error. The dashed line is the largest value that 𝜆 can take while still falling within the one standard error interval of the minimum cross-validated error.
+
+
+```{r}
+library(tidyverse)
+library(ggpubr)
+library(janitor)
+library(tidyverse)
+library(scales)
+library(broom)
+
+library(ggExtra)
+
+theme_set(theme_light())
+healthdata <- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv") |> 
+  slice(-1) |> 
+  clean_names()
+
+
+healthdata_subset <- healthdata |> 
+  select(state_abbreviation, name,county_clustered_yes_1_no_0, release_year, adult_smoking_raw_value, adult_obesity_raw_value, 
+         food_insecurity_raw_value, excessive_drinking_raw_value, child_mortality_raw_value,
+         physical_inactivity_raw_value,insufficient_sleep_raw_value, low_birthweight_raw_value, 
+         sexually_transmitted_infections_raw_value, uninsured_raw_value) |> 
+  mutate(across(ends_with('raw_value'), as.numeric)) |> 
+  filter(county_clustered_yes_1_no_0 %in% c(0,1)) |> 
+  na.omit()
+
+library(glmnet)
+model_predictors <- healthdata_subset |>
+  select(adult_smoking_raw_value, adult_obesity_raw_value, food_insecurity_raw_value, 
+         excessive_drinking_raw_value, physical_inactivity_raw_value, insufficient_sleep_raw_value, 
+         sexually_transmitted_infections_raw_value, uninsured_raw_value) |> 
+  as.matrix()
+
+model_response_birthweight <- healthdata_subset |> 
+  pull(low_birthweight_raw_value)
+
+birthweight_lm <- lm(low_birthweight_raw_value ~ adult_smoking_raw_value + adult_obesity_raw_value + 
+                       food_insecurity_raw_value + excessive_drinking_raw_value + physical_inactivity_raw_value +
+                       insufficient_sleep_raw_value + sexually_transmitted_infections_raw_value + 
+                       uninsured_raw_value, data = healthdata_subset)
+
+birthweight_ridge <- glmnet(model_predictors, model_response_birthweight, alpha = 0)
+
+birthweight_ridge_cv <- cv.glmnet(model_predictors, model_response_birthweight, alpha = 0)
+
+birthweight_lasso_cv <- cv.glmnet(model_predictors, model_response_birthweight, alpha = 1)
+
+
+tidy_lasso_coef <- tidy(birthweight_lasso_cv$glmnet.fit)
+
+tidy_lasso_coef |> 
+  mutate(term = str_remove(term, "_raw_value")) |> 
+  mutate(term = str_replace_all(term, "_", " ")) |> 
+  mutate(term = str_to_sentence(term)) |> 
+  ggplot(aes(x = lambda, y = estimate, group = term, color = term)) +
+  scale_x_log10(labels=scales::comma_format()) +
+  geom_line(alpha = 1, size =1) +
+  geom_vline(xintercept = birthweight_lasso_cv$lambda.min) +
+  geom_vline(xintercept = birthweight_lasso_cv$lambda.1se, linetype = "dashed", color = "black", size =0.5)+
+  labs(x = "Lambda",
+       y = "Coefficient Estimate",
+       color = ""
+  )+
+  theme(
+    text = element_text(family = "Helvetica", size = 7, face = "bold", color = "#2a475e"),
+    panel.grid = element_line(color = "#b4aea9"),
+    panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    legend.background =  element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    legend.text = element_text(size = 8),
+    axis.title.x = element_text(size = 10),
+    axis.title.y = element_text(size = 10),
+    axis.text.x = element_text(size = 7),
+    axis.text.y = element_text(size = 7)
+  )
+
+tidy_lasso_cv <- tidy(birthweight_lasso_cv)
+
+
+lasso_final <- glmnet(model_predictors, model_response_birthweight, alpha = 1,lambda = birthweight_lasso_cv$lambda.1se)
+
+library(vip)
+
+# Ridge Regression --------------------------------------------------------
+
+tidy_ridge_coef <- tidy(birthweight_ridge_cv$glmnet.fit)
+tidy_ridge_coef |> 
+  mutate(term = str_remove(term, "_raw_value")) |> 
+  mutate(term = str_replace_all(term, "_", " ")) |> 
+  mutate(term = str_to_sentence(term)) |> 
+  ggplot(aes(x = lambda, y = estimate, group = term, color = term)) +
+  scale_x_log10(labels = scales::comma_format()) +
+  geom_line(alpha = 1, size =1) +
+  geom_vline(xintercept = birthweight_ridge_cv$lambda.min) +
+  geom_vline(xintercept = birthweight_ridge_cv$lambda.1se, linetype = "dashed", color = "black", size =0.5)+
+  labs(x = "Lambda",
+       y = "Coefficient Estimate",
+       color = "")+
+  geom_vline(xintercept = birthweight_ridge_cv$lambda.min) +
+  geom_vline(xintercept = birthweight_ridge_cv$lambda.1se, 
+             linetype = "dashed", color = "black")+
+  theme(
+    text = element_text(family = "Helvetica", size = 7, face = "bold", color = "#2a475e"),
+    panel.grid = element_line(color = "#b4aea9"),
+    panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    legend.background =  element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    legend.text = element_text(size = 8),
+    axis.title.x = element_text(size = 10),
+    axis.title.y = element_text(size = 10),
+    axis.text.x = element_text(size = 7),
+    axis.text.y = element_text(size = 7)
+  )
+
+
+
+```
+
+
+To determine the model with the highest accuracy, we used 10-fold cross validation to evaluate the performance of each model. Ultimately, the linear regression model was chosen as it had the lowest root mean square error.
+
+
+```{r}
+#10 fold cross validation
+set.seed(150)
+k <- 10
+healthdata_subset <- healthdata_subset |>
+  mutate(test_fold = sample(rep(1:k, length.out = n())))
+
+get_test_pred <- function(k) {
+  test_data <- healthdata_subset |> filter(test_fold == k)                     
+  train_data <- healthdata_subset |> filter(test_fold != k)
+  test_x <- as.matrix(select(test_data, adult_smoking_raw_value, adult_obesity_raw_value, 
+                             food_insecurity_raw_value, excessive_drinking_raw_value, child_mortality_raw_value,
+                             physical_inactivity_raw_value,insufficient_sleep_raw_value, 
+                             sexually_transmitted_infections_raw_value, uninsured_raw_value))                       
+  train_x <- as.matrix(select(train_data, adult_smoking_raw_value, adult_obesity_raw_value, 
+                              food_insecurity_raw_value, excessive_drinking_raw_value, child_mortality_raw_value,
+                              physical_inactivity_raw_value,insufficient_sleep_raw_value,
+                              sexually_transmitted_infections_raw_value, uninsured_raw_value))
+  
+  lm_fit <- lm(low_birthweight_raw_value ~ adult_smoking_raw_value + adult_obesity_raw_value +
+                 food_insecurity_raw_value + excessive_drinking_raw_value + child_mortality_raw_value +
+                 physical_inactivity_raw_value + insufficient_sleep_raw_value + sexually_transmitted_infections_raw_value +
+                 uninsured_raw_value, data = train_data)                           
+  ridge_fit <- cv.glmnet(train_x, train_data$low_birthweight_raw_value, alpha = 0)
+  lasso_fit <- cv.glmnet(train_x, train_data$low_birthweight_raw_value, alpha = 1)
+  
+  tibble(lm_pred = predict(lm_fit, newdata = test_data),              # return test results
+         ridge_pred = as.numeric(predict(ridge_fit, newx = test_x)),
+         lasso_pred = as.numeric(predict(lasso_fit, newx = test_x)),
+         test_actual = test_data$low_birthweight_raw_value,
+         test_fold = k)
+}
+
+test_pred_all <- map(1:k, get_test_pred) |> 
+  bind_rows()
+
+
+test_pred_all |>
+  pivot_longer(lm_pred:lasso_pred, 
+               names_to = "type", 
+               values_to = "test_pred") |>
+  group_by(type, test_fold) |>
+  summarize(
+    rmse = sqrt(mean((test_actual - test_pred)^2))
+  ) |> 
+  ggplot(aes(x = type, y = rmse)) + 
+  geom_point(size = 4) +
+  stat_summary(fun = mean, geom = "point", 
+               color = "red", size = 4) + 
+  stat_summary(fun.data = mean_se, geom = "errorbar", 
+               color = "red", width = 0.2)+
+  theme(text = element_text(family = "Helvetica", size = 8, face = "bold", color = "#2a475e"),
+        plot.title = element_text(
+          family = "Helvetica", 
+          size = 10,
+          face = "bold",
+          color = "#2a475e",
+          hjust = 0.5
+        ))+
+  scale_x_discrete(labels = c("lasso_pred" = "Lasso Regression", "lm_pred"="Linear Regression", "ridge_pred"="Ridge Regression"))+
+  theme(
+    axis.ticks = element_blank(),
+    axis.line = element_line(colour = "grey50"),
+    panel.grid = element_line(color = "#b4aea9"),
+    #panel.grid.minor = element_blank(),
+    #panel.grid.major.x = element_blank(),
+    #panel.grid.major.y = element_blank(),
+    panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    text = element_text(family = "Helvetica", size = 18, 
+                        face = "bold", color = "#2a475e"),
+    plot.title = element_text(
+      family = "Helvetica", 
+      size = 20,
+      face = "bold",
+      color = "#2a475e",
+      hjust = 0.5),
+      axis.title.y = element_text(vjust = 1.3))+
+  labs(
+    x="Model Type",
+    y = "Root Mean Squared Error"
+  )
+  
+```
+
+Using the linear model, the coefficient estimates for the various predictors were obtained. The graph below demonstrates the strength and direction of each predictor on low birthweight. From this linear model, we can determine that insufficient sleep and excessive drinking are the strongest predictors of low birthweight. The discussion section of this report will delve into the reason as to why these might be the strongest predictors.
+
+
+```{r}
+#linear model coefficient estimates
+
+library(ggpubr)
+library(janitor)
+library(tidyverse)
+library(scales)
+library(tidyverse)
+library(ggExtra)
+library(broom)
+
+theme_set(theme_light())
+healthdata <- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv") |> 
+  slice(-1) |> 
+  clean_names()
+
+
+healthdata_subset <- healthdata |> 
+  select(state_abbreviation, name,county_clustered_yes_1_no_0, release_year, adult_smoking_raw_value, adult_obesity_raw_value, 
+         food_insecurity_raw_value, excessive_drinking_raw_value, child_mortality_raw_value,
+         physical_inactivity_raw_value,insufficient_sleep_raw_value, low_birthweight_raw_value, 
+         sexually_transmitted_infections_raw_value, uninsured_raw_value) |> 
+  mutate(across(ends_with('raw_value'), as.numeric)) |> 
+  filter(county_clustered_yes_1_no_0 %in% c(0,1)) |> 
+  na.omit()
+
+birthweight_lm <- lm(low_birthweight_raw_value ~ adult_smoking_raw_value + adult_obesity_raw_value + 
+                       food_insecurity_raw_value + excessive_drinking_raw_value + physical_inactivity_raw_value +
+                       insufficient_sleep_raw_value + sexually_transmitted_infections_raw_value + 
+                       uninsured_raw_value, data = healthdata_subset)
+
+birthweight_lm |> 
+  tidy(conf.int = TRUE) |> 
+  mutate(term = str_remove(term, "_raw_value")) |> 
+  mutate(term = str_replace_all(term, "_", " ")) |>
+  mutate(term = str_to_sentence(term)) |> 
+  mutate(term = str_replace(term,"Sexually transmitted infections","STIs")) |> 
+  mutate(term = fct_reorder(term, estimate)) |> 
+  ggplot(aes(x = estimate, y = term,  
+             fill = estimate)) +
+  #ggplot(aes(x = estimate, y = term,  
+             #fill = estimate > 0))
+  geom_col(color = "white", show.legend = FALSE, width = 1) +
+  geom_errorbar(aes(xmin = conf.low, xmax = conf.high), width = 0.2) +
+  #scale_fill_manual(values = c("indianred3", "deepskyblue3"))+
+  scale_fill_gradient2(low = "brown", mid = "lightgrey", high = "slateblue", midpoint = 0) +
+  #scale_color_gradient(low="blue", high="red")+
+  labs(
+    x = "Coefficient Estimate"
+  )+
+  theme(
+    text = element_text(family = "Helvetica", size = 10, face = "bold", color = "#2a475e"),
+    panel.grid = element_line(color = "#b4aea9"),
+    panel.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    plot.background = element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    legend.background =  element_rect(fill = "#fbf9f4", color = "#fbf9f4"),
+    legend.text = element_text(size = 20),
+    axis.title.x = element_text(size = 16, color = "#2a475e"),
+    axis.title.y = element_text(size = 23, FALSE),
+    axis.text.x = element_text(size = 17, color = "#2a475e"),
+    axis.text.y = element_text(size = 12, color = "#2a475e")
+  )
+
+```
+
+To investigate the relationship between the predictor variables and the response variable of child mortality, we used a decision tree. This method was used to best examine how our different variables interact with each other. The tree structure allowed us to clearly visualize how different variables influence the outcome, allowing for greater interpretability. The decision tree also automatically selected the most informative features to split on at each node. The root node or top most “box” on the tree is where the entire dataset starts dividing based on various features. The numbers in each box also represent critical information for understanding the decision tree. For example, the number at the top of each node corresponds to the average rate of child mortality while the percentage listed below is the percent of data that makes it to that node. Since the root node represents the entire dataset, the “64” means that the average rate of child mortality in the entire dataset is 64 (per 100,000) and the “100” below means it contains 100% of the data. We read this particular tree from top to bottom based on the inequality listed below each node. 
+
+
+```{r}
+#Decision tree and VIP
+
+#| fig-width: 17
+#| fig-height: 6
+
+library(ggplot2)
+library(tidyverse)
+library(janitor)
+
+Updated_Data4 <- Updated_Data3 |> 
+  select(child_mortality_raw_value, 
+         excessive_drinking_raw_value, adult_smoking_raw_value, 
+         adult_obesity_raw_value, insufficient_sleep_raw_value,
+         physical_inactivity_raw_value, food_insecurity_raw_value, 
+         uninsured_raw_value) |> 
+  mutate(child_mortality_raw_value =child_mortality_raw_value,
+         excessive_drinking_raw_value = excessive_drinking_raw_value, 
+         adult_smoking_raw_value= adult_smoking_raw_value,
+         adult_obesity_raw_value= adult_obesity_raw_value, 
+         insufficient_sleep_raw_value= insufficient_sleep_raw_value, 
+        physical_inactivity_raw_value= physical_inactivity_raw_value, 
+        food_insecurity_raw_value= food_insecurity_raw_value, 
+        uninsured_raw_value= as.numeric(uninsured_raw_value )) |> 
+  na.omit()
+
+# colnames(Updated_Data4) <- c("Child Mortality", "Excessive Drinking", "Smoking", "Obesity", "STIs", "Insufficent Sleep", "Physical Inactivity", "Food Insecurity", "Uninsured")
+  
+set.seed(1)
+train <- Updated_Data4 |> 
+  slice_sample(prop = 0.5)
+test <- Updated_Data4 |> 
+  anti_join(train)
+
+library(caret)
+hr_tree <- train(child_mortality_raw_value ~ ., method = "rpart", tuneLength = 20,
+                 trControl = trainControl(method = "cv", number = 10),
+                 data = as.data.frame(train))
+
+split.fun <- function(x, labs, digits, varlen, faclen){
+  # replace variable names in the labels
+  labs   <- sub("child_mortality_raw_value",   "Child Mortality", labs)
+  labs   <- sub("excessive_drinking_raw_value",   "Excessive Drinking", labs)
+  labs   <- sub("adult_smoking_raw_value",   "Smoking", labs)
+  labs   <- sub("adult_obesity_raw_value",   "Obesity", labs)
+  labs   <- sub("STIs",   "STIs", labs)
+  labs   <- sub("insufficient_sleep_raw_value",   "Insufficent Sleep", labs)
+  labs   <- sub("physical_inactivity_raw_value", "Physical Inactivity", labs)
+  labs   <- sub(" food_insecurity_raw_value", "Food Insecurity", labs)
+  labs   <- sub("uninsured_raw_value", "Uninsured", labs)
+  
+  # labs <- sub("survived", "survived", labs)
+  labs # return the modified labels
+}
+
+library(rpart.plot) 
+hr_tree |> 
+  pluck("finalModel") |> 
+  rpart.plot(tweak= 1, split.fun = split.fun, box.palette = c("white"))
+
+
+
+```
+
+The decision tree was then used to generate a variable importance plot, helping us pinpoint predictor variables which are most critical in determining child mortality. As shown below, this plot determined that smoking, obesity, and physical inactivity as the best predictors of child mortality.
+
+
+```{r}
+
+library(ggplot2)
+library(tidyverse)
+library(janitor)
+
+
+Updated_Data <- Data |> 
+  clean_names() |> 
+  slice(-1) |> 
+  mutate(adult_smoking_raw_value=as.numeric(adult_smoking_raw_value),
+         child_mortality_raw_value= as.numeric(child_mortality_raw_value), infant_mortality_raw_value= as.numeric(infant_mortality_raw_value)) |> 
+  filter(!is.na(adult_smoking_raw_value), !is.na(child_mortality_raw_value)) |> 
+  filter(county_clustered_yes_1_no_0 %in% c(0,1))
+
+Updated_Data2 <- Updated_Data|> 
+  clean_names() |> 
+  slice(-1) |> 
+  mutate(adult_obesity_raw_value=as.numeric(adult_obesity_raw_value),
+         child_mortality_raw_value= as.numeric(child_mortality_raw_value)) |> 
+  filter(!is.na(adult_obesity_raw_value), !is.na(child_mortality_raw_value))
+
+Updated_Data3 <- Updated_Data2 |> 
+  clean_names() |> 
+  slice(-1) |> 
+  mutate(excessive_drinking_raw_value=as.numeric(excessive_drinking_raw_value),
+         child_mortality_raw_value= as.numeric(child_mortality_raw_value), 
+         food_insecurity_raw_value= as.numeric(food_insecurity_raw_value), 
+         physical_inactivity_raw_value= as.numeric(food_insecurity_raw_value), 
+         insufficient_sleep_raw_value= as.numeric(insufficient_sleep_raw_value), 
+         STIs= as.numeric(sexually_transmitted_infections_raw_value))|> 
+  filter(!is.na(excessive_drinking_raw_value), !is.na(child_mortality_raw_value))
+
+
+Updated_Data4 <- Updated_Data3 |> 
+  select(child_mortality_raw_value, 
+         excessive_drinking_raw_value, adult_smoking_raw_value, 
+         adult_obesity_raw_value, STIs, insufficient_sleep_raw_value,
+         physical_inactivity_raw_value, food_insecurity_raw_value, 
+         uninsured_raw_value) |> 
+  mutate(child_mortality_raw_value =child_mortality_raw_value,
+         excessive_drinking_raw_value = excessive_drinking_raw_value, 
+         adult_smoking_raw_value= adult_smoking_raw_value,
+         adult_obesity_raw_value= adult_obesity_raw_value, 
+         insufficient_sleep_raw_value= insufficient_sleep_raw_value, 
+        physical_inactivity_raw_value= physical_inactivity_raw_value, 
+        food_insecurity_raw_value= food_insecurity_raw_value, 
+        uninsured_raw_value= as.numeric(uninsured_raw_value )) |> 
+  na.omit()
+
+set.seed(1)
+train <- Updated_Data4 |> 
+  slice_sample(prop = 0.5)
+test <- Updated_Data4 |> 
+  anti_join(train)
+
+library(caret)
+hr_tree <- train(child_mortality_raw_value ~ ., method = "rpart", tuneLength = 20,
+                 trControl = trainControl(method = "cv", number = 10),
+                 data = as.data.frame(train))
+
+
+split.fun <- function(x, labs, digits, varlen, faclen){
+  # replace variable names in the labels
+  labs   <- sub("child_mortality_raw_value","Child Mortality", labs)
+  labs   <- sub("excessive_drinking_raw_value","Excessive Drinking", labs)
+  labs   <- sub("adult_smoking_raw_value", "Smoking", labs)
+  labs   <- sub("adult_obesity_raw_value", "Obesity", labs)
+  labs   <- sub("STIs", "STIs", labs)
+  labs   <- sub("insufficient_sleep_raw_value",   "Insufficent Sleep", labs)
+  labs   <- sub("physical_inactivity_raw_value", "Physical Inactivity", labs)
+  labs   <- sub("food_insecurity_raw_value", "Food Insecurity", labs)
+  labs   <- sub("uninsured_raw_value", "Uninsured", labs)
+}
+
+ 
+ library(vip)
+ vip_plot = hr_tree |> 
+   vip(aesthetics = list(fill = "brown")) + scale_x_discrete(labels = c(adult_obesity_raw_value='Adult Obesity',
+                                       adult_smoking_raw_value = 'Adult Smoking',
+                                       excessive_drinking_raw_value= 'Excessive Drinking', 
+                            physical_inactivity_raw_value= 'Physical Inactivity', 
+                            insufficient_sleep_raw_value= 'Insufficent Sleep', 
+                           food_insecurity_raw_value= 'Food Insecurity', 
+                           uninsured_raw_value= 'Uninsured'))+
+   # scale_x_continuous(labels=percent_format())+
+   scale_y_continuous()+
+   theme(text= element_text(family="Helvetica", size=20, face="bold", color="#2A475E"),
+         plot.title = element_text(
+           family= "Helvetica",
+           size=18, 
+           face= "bold", 
+           color= "#2A475E", 
+           hjust=.5
+         ))+
+   theme(
+     axis.ticks= element_blank(), 
+     axis.line= element_line(colour="grey50"), 
+     panel.grid= element_line(color="#B4AEA9"),
+     panel.grid.minor = element_blank(), 
+     panel.grid.major.x = element_blank(), 
+     panel.grid.major.y = element_blank(), 
+     panel.background = element_rect(fill="#FBF9F4", color= "#FBF9F4"), 
+     plot.background = element_rect(fill="#FBF9F4", color= "#FBF9F4")
+   )
+ 
+ drinking<- Updated_Data3 |> 
+   ggplot(aes(x= excessive_drinking_raw_value, y= child_mortality_raw_value))+
+   geom_point(color="brown", alpha=.5)+
+   geom_smooth(method= lm, color="darkblue")+
+   scale_x_continuous(labels=percent_format())+
+   scale_y_continuous()+
+   labs(x= "Excessive Drinking", y= "Child Mortality",  title= "Excessive Drinking")+
+   theme(text= element_text(family="Helvetica", size=20, face="bold", color="#2A475E"),
+         plot.title = element_text(
+           family= "Helvetica",
+           size=18, 
+           face= "bold", 
+           color= "#2A475E", 
+           hjust=.5
+         ))+
+   theme(
+     axis.ticks= element_blank(), 
+     axis.line= element_line(colour="grey50"), 
+     panel.grid= element_line(color="#B4AEA9"),
+     panel.grid.minor = element_blank(), 
+     panel.grid.major.x = element_blank(), 
+     panel.grid.major.y = element_blank(), 
+     panel.background = element_rect(fill="#FBF9F4", color= "#FBF9F4"), 
+     plot.background = element_rect(fill="#FBF9F4", color= "#FBF9F4")
+   )
+ 
+ 
+vip_plot
+```
+
+
+## Discussion
+
+IIn this report we investigated how juvenile health outcomes are affected by adult health behaviors. More specifically, we examined a multitude of health behaviors and their relationship to child mortality and low birthweight. 
+
+We have seen from the variable importance plot above that the best two predictors of child mortality are adult smoking and adult obesity. This is not surprising as both of these can easily be explained as a cause of child mortality with additional research. For example with smoking, the CDC states that a child in a smoke free environment has a lesser risk of lung problems such as pneumonia and asthma attacks, both of which can cause serious complications (Smoking, pregnancy, and babies 2023). For adult obesity, this can be explained as a critical predictor of child mortality given the fact that the diet of the mother during pregnancy has a direct impact on the health of the baby even once it is born. Parents' eating habits and lifestyle choices can have a significant impact on the child as children often model their parents behavior. Not only this, but they are reliant on their parents especially during early childhood to provide them with food and entertainment meaning they eat food and participate in activities their parents provide for them. Poor lifestyle choices early on can also impact an individual later in their life. 
+
+In regards to low birthweight, the linear regression model found that insufficient sleep and food insecurity are the strongest predictors of an increase of low birth weight while excessive drinking is the strongest in terms of a decrease in low birthweight. According to the Sleep Medicine Reviews journal,“Specifically, women who are sleep deprived during pregnancy may experience longer labor, more pain and discomfort during labor, higher rates of preterm labor and cesarean section” (Chang et al., 2011). It is not surprising to see that a general behavior such as insufficient sleep can create a wide variety of issues leading to lower birthweight. Not only this, but for food insecurity, our model also aligns with findings from the Journal of Applied Research and Children in which they state that “food and nutrition are critically important to support a healthy pregnancy, and impact preterm birth and low birth weight” (Grilo et al., 2015). Low birthweight is a significant public health issue, and according to Time Magazine “underweight newborns are at an increased risk of long term health challenges, lower IQ scores, and developmental delays” (Ney 2024). Importantly, babies born with low birthweight often require extensive medical care, which can lead to increased healthcare costs. As such, it is critical to understand which factors are most critical in predicting low birthweight.
+
+Arguably most important are the intergenerational health impacts involved. The health of one generation directly impacts the next. By addressing factors that contribute to low birthweight and child mortality, we can help ensure healthier future generations. By clearly understanding the link between these adult behaviors and child outcomes, healthcare providers can develop targeted interventions to reduce health problems among their patients. Furthermore, data-driven insights can inform public health policies and programs aimed at reducing the rate of low birthweight and child mortality by emphasizing healthy food choices and neglecting smoking and drinking. Lastly, highlighting the risks associated with these behaviors can lead to more effective public health campaigns and preventive strategies.
+
+**Limitations**
+
+The dataset only included three variables specific to juvenile health, two of which we chose to focus on. Child mortality rate is a relatively rare event and will experience small changes, especially in small communities, which may be hard to detect. Counties with smaller populations may also experience a lot of relative change in mortality rates from year to year, often due to normal variation rather than the true underlying risk for child mortality. The dataset consisted of county level population data, rather than data on parent-to-child relationships which limited the conclusions we could make from trends in the data. As such, we focused on understanding general trends at the county level. Importantly, the data was not factored by gender. In this dataset, the data are grouped as a whole without considering if the parent is male or female, limiting the validity of certain conclusions such as the strong negative correlation between excessive drinking and child mortality.
+
+**Future Work**
+
+Our work focuses on predicting juvenile health outcomes from adult health behaviors in the population. For future analysis we hope to gain access to direct parent-to-child data so that it is clear to see the precise relationship between a parent’s health behavior and their child’s outcomes. We also aim to investigate the strong negative correlation between excessive drinking and child mortality. We hypothesize that this trend occurs due to the lack of factoring by gender. For example, it may be the case that more people in the county population are men who excessively drink, rather than women. Additionally, looking at data by state rather than county can best help infer which regions of the United States might require more resources for addressing child mortality and low birthweight. It is also important to note that analyzing by region might also help us understand how various environmental factors influence such behaviors and outcomes. We also stress the importance of studies to investigate how such factors can influence intergenerational health outcomes. For our future studies, we hope to additionally use demographics, income, and gender as these variables may influence low birthweight and child mortality.  
+
+
+## References
+“Smoking, Pregnancy, and Babies.” Centers for Disease Control and Prevention, Centers for
+ Disease Control and Prevention, 13 Oct. 2023,
+ www.cdc.gov/tobacco/campaign/tips/diseases/pregnancy.html#:~:text=Smoking%. 
+
+Chang, Jen Jen et al. “Sleep deprivation during pregnancy and maternal and fetal outcomes: is
+ 	is there a relationship?.” Sleep medicine reviews vol. 14,2 (2010): 107-14.
+doi:10.1016/j.smrv.2009.05.001.
+
+Grilo, Stephanie A et al. “Food Matters: Food Insecurity among Pregnant Adolescents and
+Infant Birth Outcomes.” The journal of applied research on children : informing policy for children at risk vol. 6,2 (2015): 4.
+
+Ney, Jeremy. “Mapping America’s Birthweight Crisis.” Time, Time Magazine, 9 Apr. 2024, time.com/6965173/americas-birthweight-crisis/. 
+
+University of Wisconsin Population Health Institute. County Health Rankings & Roadmaps 2024. www.countyhealthrankings.org. 
+
+
+

@@ -2,10 +2,12 @@ library(ggplot2)
 library(tidyverse)
 library(janitor)
 
-Data<- read_csv("Benton/analytic_data2024.csv")
+Data<- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv")
 
 
 na.omit(Data)
+
+
 Updated_Data <- Data |> 
   clean_names() |> 
   slice(-1) |> 
@@ -221,12 +223,12 @@ split.fun <- function(x, labs, digits, varlen, faclen){
   # replace variable names in the labels
   labs   <- sub("child_mortality_raw_value",   "Child Mortality", labs)
   labs   <- sub("excessive_drinking_raw_value",   "Excessive Drinking", labs)
-  labs   <- sub("adult_smoking_raw_value",   "Smoking", labs)
-  labs   <- sub("adult_obesity_raw_value",   "Obesity", labs)
-  labs   <- sub("STIs",   "STIs", labs)
+  labs   <- sub("adult_smoking_raw_value", "Smoking", labs)
+  labs   <- sub("adult_obesity_raw_value", "Obesity", labs)
+  labs   <- sub("STIs", "STIs", labs)
   labs   <- sub("insufficient_sleep_raw_value",   "Insufficent Sleep", labs)
   labs   <- sub("physical_inactivity_raw_value", "Physical Inactivity", labs)
-  labs   <- sub(" food_insecurity_raw_value", "Food Insecurity", labs)
+  labs   <- sub("food_insecurity_raw_value", "Food Insecurity", labs)
   labs   <- sub("uninsured_raw_value", "Uninsured", labs)
   
   # labs <- sub("survived", "survived", labs)

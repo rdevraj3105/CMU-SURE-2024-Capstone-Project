@@ -25,10 +25,9 @@ editor:
 
 ## Introduction
 
-The health behaviors of adults in a community can have a profound impact on their children’s health outcomes. Juvenile quality and length of life can be impacted by the behaviors of the adults around them, such as smoking, drinking, poor diet, physical inactivity, and a variety of other factors. It is crucial to identify and address these health outcomes as they impact the overall wellbeing of an individual which affects their everyday life. These insights can be utilized to identify intergenerational health impacts to provide early intervention and prevention of harmful juvenile outcomes as well as influence new policy and education. In this report, we analyze the impact of a variety of adult health behaviors on child mortality rate and low birthweight on a county level, and how such factors affect these specific health outcomes. 
+The health behaviors of adults in a community can have a profound impact on their children’s health outcomes. Juvenile quality and length of life can be impacted by the behaviors of the adults around them, such as smoking, drinking, poor diet, physical inactivity, and a variety of other factors. It is crucial to identify and address these health outcomes as they impact the overall wellbeing of an individual which affects their everyday life. These insights can be utilized to identify intergenerational health impacts to provide early intervention and prevention of harmful juvenile outcomes as well as influence new policy and education. In this report, we analyze the impact of a variety of adult health behaviors on child mortality rate and low birthweight on a county level, and how such factors affect these specific health outcomes.
 
 We decided to use low birthweight as a measure of juvenile outcomes due to the risk of future negative health problems and death. According to the University of Wisconsin Population Health Institute, “infants born with low birthweight have approximately 20 times greater chance of dying than those with normal birth weight” (County Health Rankings 2024). Moreover, infants who survive low birthweight at birth “may face adverse health outcomes such as decreased growth, lower IQ, impaired language development, and chronic conditions (e.g., obesity, diabetes, cardiovascular disease) during adulthood” (County Health Rankings 2024). We also chose to use the child mortality rate variable as a measure of  juvenile outcome. While childhood mortality is somewhat rare, mortality rates illustrate the most severe consequence of negative health behaviors and can point to the more significant behaviors that need to be addressed. 
-
 
 
 ## The Data
@@ -45,7 +44,7 @@ The data utilized is from the County Health Rankings & Roadmaps sourced by the P
 - Adult Obesity: percentage of the adult population that reports a body mass index greater than or equal to 30 kg/m2
 
 
-## Exploratory Data Analysis & Cleaning
+## Exploratory Data Analysis
 
 We performed some initial pre-processing and cleaning of the dataset before investigating the variables. The following scatterplots demonstrate the child mortality rate relationship between adult obesity, adult smoking, and excessive drinking. Excessive drinking appears to have a strong negative correlation with child mortality, and we will discuss this trend later in the report. However, adult smoking and adult obesity demonstrate a moderately strong linear relationship, suggesting that when these increase, the rate of child mortality also increases. 
 
@@ -61,6 +60,7 @@ library(janitor)
 library(scales)
 library(cowplot)
 library(patchwork)
+library(ggpubr)
 
 Data<- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv")
 
@@ -94,6 +94,7 @@ obesity<- Updated_Data3 |>
   ggplot(aes(x= adult_obesity_raw_value, y= child_mortality_raw_value))+
   geom_point(color="brown", alpha=.3)+
   geom_smooth(method= lm, color="black")+
+  stat_cor(method="pearson")+
   scale_x_continuous(labels=percent_format())+
   scale_y_continuous()+
   labs(x= "Adult Obesity", y= "Child Mortality")+
@@ -120,6 +121,7 @@ smoking<- Updated_Data3 |>
   ggplot(aes(x= adult_smoking_raw_value, y= child_mortality_raw_value))+
   geom_point(color="brown", alpha=.3)+
   geom_smooth(method= lm, color="black")+
+  stat_cor(method="pearson")+
   scale_x_continuous(labels=percent_format())+
   scale_y_continuous()+
   labs(x= "Adult Smoking", y= "Child Mortality")+
@@ -146,6 +148,7 @@ drinking<- Updated_Data3 |>
   ggplot(aes(x= excessive_drinking_raw_value, y= child_mortality_raw_value))+
   geom_point(color="brown", alpha=.3)+
   geom_smooth(method= lm, color="black")+
+  stat_cor(method="pearson")+
   scale_x_continuous(labels=percent_format())+
   scale_y_continuous()+
   labs(x= "Excessive Drinking", y= "Child Mortality")+
@@ -425,7 +428,7 @@ tidy_ridge_coef |>
   mutate(term = str_replace_all(term, "_", " ")) |> 
   mutate(term = str_to_sentence(term)) |> 
   ggplot(aes(x = lambda, y = estimate, group = term, color = term)) +
-  scale_x_log10() +
+  scale_x_log10(labels = scales::comma_format()) +
   geom_line(alpha = 1, size =1) +
   geom_vline(xintercept = birthweight_ridge_cv$lambda.min) +
   geom_vline(xintercept = birthweight_ridge_cv$lambda.1se, linetype = "dashed", color = "black", size =0.5)+
@@ -610,6 +613,7 @@ To investigate the relationship between the predictor variables and the response
 ```{r}
 #Decision tree and VIP
 
+#| fig_width: 7
 
 Updated_Data4 <- Updated_Data3 |> 
   select(child_mortality_raw_value, 
@@ -643,7 +647,7 @@ split.fun <- function(x, labs, digits, varlen, faclen){
   labs   <- sub("STIs",   "STIs", labs)
   labs   <- sub("insufficient_sleep_raw_value",   "Insufficent Sleep", labs)
   labs   <- sub("physical_inactivity_raw_value", "Physical Inactivity", labs)
-  labs   <- sub(" food_insecurity_raw_value", "Food Insecurity", labs)
+  labs   <- sub("food_insecurity_raw_value", "Food Insecurity", labs)
   labs   <- sub("uninsured_raw_value", "Uninsured", labs)
   
   # labs <- sub("survived", "survived", labs)
@@ -728,13 +732,17 @@ library(vip)
 
 In this report we investigated how juvenile health outcomes are affected by adult health behaviors. More specifically, we examined a multitude of health behaviors and their relationship to child mortality and low birthweight. 
 We have seen from the variable importance plot above that the best two predictors of child mortality are adult smoking and adult obesity. This is not surprising as both of these can easily be explained as a cause of child mortality with additional research. For example with smoking, the CDC states that a child in a smoke free environment has a lesser risk of lung problems such as pneumonia and asthma attacks, both of which can cause serious complications (Smoking, pregnancy, and babies 2023). For adult obesity, this can be explained as a critical predictor of child mortality given the fact that the diet of the mother during pregnancy has a direct impact on the health of the baby even once it is born. Parents' eating habits and lifestyle choices can have a significant impact on the child as children often model their parents behavior. Not only this, but they are reliant on their parents especially during early childhood to provide them with food and entertainment meaning they eat food and participate in activities their parents provide for them. Poor lifestyle choices early on can also impact an individual later in their life. 
+
 In regards to low birthweight, the linear regression model found that insufficient sleep and food insecurity are the strongest predictors of an increase of low birth weight while excessive drinking is the strongest in terms of a decrease in low birthweight. According to the Sleep Medicine Reviews journal,“Specifically, women who are sleep deprived during pregnancy may experience longer labor, more pain and discomfort during labor, higher rates of preterm labor and cesarean section” (Chang et al., 2011). It is not surprising to see that a general behavior such as insufficient sleep can create a wide variety of issues leading to lower birthweight. Not only this, but for food insecurity, our model also aligns with findings from the Journal of Applied Research and Children in which they state that “food and nutrition are critically important to support a healthy pregnancy, and impact preterm birth and low birth weight” (Grilo et al., 2015). Low birthweight is a significant public health issue, and according to Time Magazine “underweight newborns are at an increased risk of long term health challenges, lower IQ scores, and developmental delays” (Ney 2024). Importantly, babies born with low birthweight often require extensive medical care, which can lead to increased healthcare costs. As such, it is critical to understand which factors are most critical in predicting low birthweight.
+
 Arguably most important are the intergenerational health impacts involved. The health of one generation directly impacts the next. By addressing factors that contribute to low birthweight and child mortality, we can help ensure healthier future generations. By clearly understanding the link between these adult behaviors and child outcomes, healthcare providers can develop targeted interventions to reduce health problems among their patients. Furthermore, data-driven insights can inform public health policies and programs aimed at reducing the rate of low birthweight and child mortality by emphasizing healthy food choices and neglecting smoking and drinking. Lastly, highlighting the risks associated with these behaviors can lead to more effective public health campaigns and preventive strategies.
 
 **Limitations**
+
 The dataset only included three variables specific to juvenile health, two of which we chose to focus on. Child mortality rate is a relatively rare event and will experience small changes, especially in small communities, which may be hard to detect. Counties with smaller populations may also experience a lot of relative change in mortality rates from year to year, often due to normal variation rather than the true underlying risk for child mortality. The dataset consisted of county level population data, rather than data on parent-to-child relationships which limited the conclusions we could make from trends in the data. As such, we focused on understanding general trends at the county level. Importantly, the data was not factored by gender. In this dataset, the data are grouped as a whole without considering if the parent is male or female, limiting the validity of certain conclusions such as the strong negative correlation between excessive drinking and child mortality.
 
 **Future Work**
+
 Our work focuses on predicting juvenile health outcomes from adult health behaviors in the population. For future analysis we hope to gain access to direct parent-to-child data so that it is clear to see the precise relationship between a parent’s health behavior and their child’s outcomes. We also aim to investigate the strong negative correlation between excessive drinking and child mortality. We hypothesize that this trend occurs due to the lack of factoring by gender. For example, it may be the case that more people in the county population are men who excessively drink, rather than women. Additionally, looking at data by state rather than county can best help infer which regions of the United States might require more resources for addressing child mortality and low birthweight. It is also important to note that analyzing by region might also help us understand how various environmental factors influence such behaviors and outcomes. We also stress the importance of studies to investigate how such factors can influence intergenerational health outcomes. For our future studies, we hope to additionally use demographics, income, and gender as these variables may influence low birthweight and child mortality. 
 
 
