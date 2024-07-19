@@ -51,6 +51,8 @@ We performed some initial pre-processing and cleaning of the dataset before inve
 
 
 ```{r}
+#| fig-width: 7
+#| fig-height: 3
 
 #Child Mortality scatterplots
 library(ggplot2)
@@ -175,6 +177,9 @@ The following scatterplots are a glimpse at the relationship between low birthwe
 
 
 ```{r}
+#| fig-width: 7
+#| fig-height: 5
+
 
 library(tidyverse)
 healthdata <- read_csv("/Users/jessicalambert/Desktop/CMU Health/CMU Capstone Project/Data/analytic_data2024.csv")
@@ -265,7 +270,8 @@ Not only did we analyze the relationship between these adult behaviors and child
 
 ```{r}
 #insufficient sleep lollipop graph
-
+#| fig-width: 3
+#| fig-height:3
 
 healthdata_subset <- healthdata |> 
   select(state_abbreviation, name,county_clustered_yes_1_no_0, release_year, adult_smoking_raw_value, adult_obesity_raw_value, 
@@ -335,6 +341,7 @@ library(ggpubr)
 library(janitor)
 library(tidyverse)
 library(scales)
+library(broom)
 
 library(ggExtra)
 
