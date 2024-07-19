@@ -21,6 +21,7 @@ editor:
     wrap: sentence
 ---
 
+
 ------------------------------------------------------------------------
 
 ## Introduction
@@ -46,6 +47,7 @@ The data used is from the County Health Rankings & Roadmaps sourced by the Unive
 ## Exploratory Data Analysis
 
 We performed some initial pre-processing and cleaning of the dataset before investigating the variables. The following scatterplots demonstrate the child mortality rate relationship between adult obesity, adult smoking, and excessive drinking. Excessive drinking appears to have a strong negative correlation with child mortality, and we will discuss this trend later in the report. However, adult smoking and adult obesity demonstrate a moderately strong linear relationship, suggesting that when these increase, the rate of child mortality also increases. 
+
 
 
 ```{r}
@@ -176,7 +178,9 @@ plot_grid(drinking+smoking+obesity)
 
 ```
 
+
 The following scatterplots are a glimpse at the relationship between low birthweight and some adult health behaviors: adult smoking, insufficient sleep, adult obesity, and food insecurity. All four scatterplots demonstrate a moderately strong positive correlation. Of the scatterplots shown, insufficient sleep has the strongest relationship with low birthweight with a correlation coefficient of 0.59, indicating that more insufficient sleep is associated with a higher likelihood of low birthweight. From this elementary data analysis, many of our hypotheses seem to be confirmed, since these detrimental adult behaviors are showing an increase in the rate of low birthweight. In the modeling section of this report, we will attempt to pinpoint which specific predictors are the strongest indicators of low birthweight.
+
 
 
 ```{r}
@@ -268,7 +272,9 @@ plot_grid(sleep_plot, smoke_plot, food_plot, obesity_plot)
 ```
 
 
+
 Not only did we analyze the relationship between these adult behaviors and child outcomes, we also explored such trends across the nation. The graph below illustrates the percentage of low birthweight births by state and is colored by the percentage of the county population reporting insufficient sleep. The red points represent counties with over 75% of the population reporting insufficient sleep. Generally, counties that have a higher percentage of low birthweight births are also counties with a higher percentage of insufficient sleep across the nation. The red points are primarily to the right side of the graph for most states, indicating an association between low birthweight and insufficient sleep throughout the country. 
+
 
 
 ```{r}
@@ -350,9 +356,11 @@ healthdata_subset |>
 ```
 
 
+
 ## Methods and Modeling
 
 To predict low birthweight in counties across the United States, we evaluated 3 models: lasso regression, ridge regression, and linear regression. Lasso regression and ridge regression were chosen to determine the effect of regularization and variable selection on modeling by introducing a shrinkage penalty. The variables considered for these include the following: adult smoking, adult obesity, food insecurity, excessive drinking, physical inactivity, insufficient sleep, sexually transmitted infections, and the percentage of uninsured. In all cases, we filtered for observations that had complete data. The data was also standardized for lasso and ridge regression with glmnet in R. For the lasso and ridge regression models, 10-fold cross validation was used to select the value of 𝜆; alpha values of 0 and 1 were set respectively. For example, the plots below depict how the coefficient estimates respond to different values of 𝜆 with lasso regression and ridge regression, respectively. The solid line is the smallest 𝜆 value that gives the minimum mean cross-validated error. The dashed line is the largest value that 𝜆 can take while still falling within the one standard error interval of the minimum cross-validated error.
+
 
 
 ```{r}
@@ -521,7 +529,9 @@ tidy_ridge_coef |>
 
 ```
 
+
 To determine the model with the highest accuracy, we used 10-fold cross validation to evaluate the performance of each model. Ultimately, the linear regression model was chosen as it had the lowest root mean square error.
+
 
 
 ```{r}
@@ -611,7 +621,9 @@ test_pred_all |>
   
 ```
 
+
 Using the linear model, the coefficient estimates for the various predictors were obtained. The graph below demonstrates the strength and direction of each predictor on low birthweight. From this linear model, we can determine that insufficient sleep and excessive drinking are the strongest predictors of low birthweight. The discussion section of this report will delve into the reason as to why these might be the strongest predictors.
+
 
 
 ```{r}
@@ -678,7 +690,9 @@ birthweight_lm |>
 
 ```
 
+
 To investigate the relationship between the predictor variables and the response variable of child mortality, we used a decision tree. The tree structure allowed us to clearly visualize how different variables predict the outcome, allowing for greater interpretability. The decision tree also automatically selected the most informative features to split on at each node. The numbers in each node also represent critical information for understanding the decision tree. The number at the top of each node corresponds to the average rate of child mortality while the percentage listed below is the percent of data that makes it to that node. For example, the right terminal node under excessive drinking represents that based on the conditions that the percentage of smoking is less than 25%, the percentage of uninsured is greater than 8.5%, and that the percentage of excessive drinking is greater than or equal to 14%, the predicted average rate of child mortality is 86 (per 100,000), and it contains 11% of the data.
+
 
 
 ```{r}
@@ -744,7 +758,9 @@ hr_tree |>
 
 ```
 
+
 The decision tree was then used to generate a variable importance plot, helping us pinpoint predictor variables which are most critical in determining child mortality. As shown below, this plot determined that smoking, obesity, and physical inactivity as the best predictors of child mortality. 
+
 
 
 ```{r}
@@ -885,6 +901,7 @@ vip_plot
 ```
 
 
+
 ## Discussion
 
 In this report we investigated how juvenile health outcomes are affected by adult health behaviors. More specifically, we examined a multitude of health behaviors and their relationship to child mortality and low birthweight. 
@@ -920,6 +937,7 @@ Infant Birth Outcomes.” The journal of applied research on children : informin
 Ney, Jeremy. “Mapping America’s Birthweight Crisis.” Time, Time Magazine, 9 Apr. 2024, time.com/6965173/americas-birthweight-crisis/. 
 
 University of Wisconsin Population Health Institute. County Health Rankings & Roadmaps 2024. www.countyhealthrankings.org. 
+
 
 
 
